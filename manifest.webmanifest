@@ -1,0 +1,16 @@
+{
+  "name": "Solvo Timer",
+  "short_name": "Solvo",
+  "description": "Speedcubing timer with WCA inspection, analytics, replays, trainers and a coach.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0d0a18",
+  "theme_color": "#0d0a18",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
