@@ -16,7 +16,9 @@ A speedcubing timer that runs entirely in the browser. No server, no build step.
 - GAN smart cube and GAN Smart Timer over Web Bluetooth (Chrome / Edge, https only)
 - Installable as an app (PWA) and works offline
 - Polished feel: animated 3D cube turns, progress ring for hold and inspection, gold PB moment with chime, vibration on phones, last-solve delta, interactive chart tooltips (click a point to open the solve), colour-coded scramble with step-by-step preview
-- 10 one-tap themes and 5 timer fonts (Bold, Thin, Stackmat, Futuristic, Mono), gradient glass cards, bottom tab bar on phones, keyboard shortcuts overlay (press ?)
+- GPU backgrounds: 10 WebGL shader scenes (Nebula, Aurora, Liquid Chrome, Hyperdrive, Synthwave, Rubik Field, Voronoi Glass, Spiral Galaxy, Electric Storm, Ink Swirl) that react to the timer: they speed up while you solve, glow red while you hold, green when you can go, flash when inspection runs late and turn gold on a PB. Resolution adapts to keep 60 fps, and browsers without a fast GPU get 2D versions
+- Effects: shockwave and warp streaks when the clock starts and stops, fireworks for PBs and badges, the virtual cube spins apart and back together when solved, glitch on DNF, glowing time while solving, cursor trail, card tilt and spotlight (each one can be turned off in Settings → Effects)
+- 13 one-tap themes and 7 timer fonts (Wide, Arena, Bold, Thin, Stackmat, Futuristic, Mono), typography in Unbounded, Manrope and Geist Mono, gradient glass cards, bottom tab bar on phones, keyboard shortcuts overlay (press ?)
 - Import csTimer exports; export JSON / CSV
 
 The shared weekly leaderboard and live 1v1 battles need the Claude-hosted version (they use Claude's shared storage and rooms). On this site your data is stored in your browser; export a JSON backup from Settings → Import & export.

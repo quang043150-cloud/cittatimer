@@ -11,12 +11,13 @@
   const WIDGETS = { times: 'Recent times', goals: 'Session goals', averages: 'Averages', trend: 'Solve trend', chart: 'Solve times chart', last12: 'Last 12 solves', ladder: 'Sub-X ladder', net: 'Scramble preview', missions: 'Daily missions', pbs: 'Personal bests' };
   const DEFAULTS = {
     inspection: true, holdMs: 300, timerUpdate: 'full', focus: true, beeps: true, input: 'timer',
-    bg: 'bubbles', palette: 0, customPal: { shadow: '#120c22', mid: '#6d3fd6', high: '#c4b5fd' }, bgSpeed: 1, blur: 14, glassA: 0.58, radius: 14, freeze: false, quality: 1,
+    bg: 'gl-nebula', palette: 0, customPal: { shadow: '#120c22', mid: '#6d3fd6', high: '#c4b5fd' }, bgSpeed: 1, blur: 14, glassA: 0.58, radius: 14, freeze: false, quality: 1,
     accent: '#a78bfa', mode: 'full',
     layout: { left: ['times'], right: ['goals', 'averages', 'trend'], under: ['chart', 'last12', 'ladder'] },
     showNet: true, pbFx: true, missions: true, compBg: 'sakura',
     callout: 'beep', metroOn: false, metroTps: 4, ghost: false, ghostSrc: 'pb',
-    timerFont: 'bold', uiSounds: 'pb', haptics: true, colorScr: true, parallax: true, theme: 'amethyst',
+    timerFont: 'wide', uiSounds: 'pb', haptics: true, colorScr: true, parallax: true, theme: 'amethyst',
+    fxReactive: true, fxShock: true, fxFireworks: true, fxTrail: true, fxTilt: true, fxIntensity: 1, fxv: 2,
     goals: { solves: 50, subT: 10, subN: 10, ao5: 9 }
   };
   const LS_KEY = 'solvo.v1';
@@ -35,6 +36,7 @@
     const hadCallout = !!(s.settings && 'callout' in s.settings);
     s.settings = Object.assign(JSON.parse(JSON.stringify(DEFAULTS)), s.settings || {});
     if (!hadCallout && s.settings.beeps === false) s.settings.callout = 'off';
+    if (s.settings.fxv !== 2) { if (s.settings.bg === 'bubbles') s.settings.bg = 'gl-nebula'; if (s.settings.timerFont === 'bold') s.settings.timerFont = 'wide'; s.settings.fxv = 2; }
     s.settings.layout = Object.assign({}, DEFAULTS.layout, s.settings.layout || {});
     s.settings.goals = Object.assign({}, DEFAULTS.goals, s.settings.goals || {});
     s.sessions = s.sessions || []; s.solves = s.solves || {}; s.replays = s.replays || {}; s.coach = s.coach || { xp: 0, done: {} }; s.coach.done = s.coach.done || {};
@@ -186,7 +188,7 @@
   function applySettings() {
     const s = set(), root = document.documentElement.style;
     root.setProperty('--accent', s.accent); root.setProperty('--accent-ink', lum(s.accent) > 0.55 ? '#160e2e' : '#ffffff');
-    const tf = TIMER_FONTS[s.timerFont] || TIMER_FONTS.bold; root.setProperty('--f-timer', tf.f); root.setProperty('--w-timer', tf.w); root.setProperty('--ls-timer', tf.ls);
+    const tf = TIMER_FONTS[s.timerFont] || TIMER_FONTS.wide; root.setProperty('--f-timer', tf.f); root.setProperty('--w-timer', tf.w); root.setProperty('--ls-timer', tf.ls);
     root.setProperty('--blur', s.blur + 'px'); root.setProperty('--glass', `rgba(18,13,34,${s.glassA})`); root.setProperty('--radius', s.radius + 'px');
     if (engine) { engine.P = palette(); engine.speed = s.bgSpeed; const want = App.view === 'comp' ? s.compBg : s.bg; if (engine.quality !== s.quality) { engine.quality = s.quality; engine.id === want && engine.resize(); } if (engine.id !== want) engine.set(want); else engine.draw(); }
     $('#v-timer').classList.toggle('simple', s.mode === 'simple');
@@ -195,11 +197,13 @@
   }
 
   const TIMER_FONTS = {
+    wide: { name: 'Wide', f: '"Unbounded", "Outfit", "Segoe UI", system-ui, sans-serif', w: 800, ls: '-0.045em' },
+    arena: { name: 'Arena', f: '"Big Shoulders Display", "Outfit", "Segoe UI", system-ui, sans-serif', w: 900, ls: '0.01em' },
     bold: { name: 'Bold', f: '"Outfit", "Segoe UI", system-ui, sans-serif', w: 800, ls: '-0.03em' },
     thin: { name: 'Thin', f: '"Outfit", "Segoe UI", system-ui, sans-serif', w: 200, ls: '-0.02em' },
     digital: { name: 'Stackmat', f: '"Share Tech Mono", ui-monospace, "SF Mono", monospace', w: 400, ls: '0em' },
     future: { name: 'Futuristic', f: '"Orbitron", "Segoe UI", system-ui, sans-serif', w: 800, ls: '0em' },
-    mono: { name: 'Mono', f: '"JetBrains Mono", ui-monospace, monospace', w: 700, ls: '-0.05em' },
+    mono: { name: 'Mono', f: '"Geist Mono", ui-monospace, monospace', w: 700, ls: '-0.05em' },
   };
 
   // ------------------------------------------------------------------ icons (stroke SVG, one family)
@@ -235,6 +239,7 @@
   }
   function confetti() {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (window.SolvoFX && window.SolvoFX.fireworks()) return;
     const c = $('#confetti'), ctx = c.getContext('2d'); c.width = innerWidth; c.height = innerHeight;
     const cols = C.COLORS, ps = []; for (let i = 0; i < 160; i++) ps.push({ x: innerWidth / 2, y: innerHeight * 0.45, vx: (Math.random() - 0.5) * 16, vy: -Math.random() * 15 - 4, s: 5 + Math.random() * 6, c: cols[i % 6], r: Math.random() * 6 });
     let f = 0; (function step() { ctx.clearRect(0, 0, c.width, c.height); for (const p of ps) { p.vy += 0.45; p.x += p.vx; p.y += p.vy; p.r += 0.15; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 2, p.s, p.s * 0.6); ctx.restore(); } if (++f < 120) requestAnimationFrame(step); else ctx.clearRect(0, 0, c.width, c.height); })();
@@ -464,7 +469,8 @@
     if (pen === -1) return 'DNF';
     if (ms === null) return 'DNF';
     const s = St.fmt(ms); const i = s.lastIndexOf('.');
-    return (i > 0 ? `${s.slice(0, i)}<small>${s.slice(i)}</small>` : s) + (pen === 2000 ? '<small>+</small>' : '');
+    const out = (i > 0 ? `${s.slice(0, i)}<small>${s.slice(i)}</small>` : s) + (pen === 2000 ? '<small>+</small>' : '');
+    return ms >= 60000 ? `<span class="lng">${out}</span>` : out;
   }
 
   // ------------------------------------------------------------------ scrambles
@@ -793,6 +799,7 @@
     if (v === 'timer') { Timer.setCtx(timerCtx()); renderSolve(); }
     else if (App.render[v]) App.render[v](sub);
     const h = '#' + v; if (location.hash !== h) { try { history.replaceState(null, '', h); } catch (e) { location.hash = h; } }
+    emit('view', v, sub);
   }
 
   function fillInputs() {
@@ -830,10 +837,10 @@
     // splash: once per browser session
     const sp = $('#splash'); if (sp) { let seen = false; try { seen = sessionStorage.getItem('solvo.splash') === '1'; sessionStorage.setItem('solvo.splash', '1'); } catch (e) { } if (seen || C.reducedMotion()) sp.remove(); else setTimeout(() => sp.remove(), 1500); }
     // background parallax (mouse only)
-    const bg = $('#bg'); let raf = 0, px = 0, py = 0;
+    const bgs = $$('#bg, #bgl'); let raf = 0, px = 0, py = 0;
     if (matchMedia('(pointer: fine)').matches) window.addEventListener('pointermove', e => {
       if (e.pointerType !== 'mouse') return; px = e.clientX / innerWidth - 0.5; py = e.clientY / innerHeight - 0.5;
-      if (!raf) raf = requestAnimationFrame(() => { raf = 0; const on = set().parallax !== false && !C.reducedMotion() && !document.body.classList.contains('solving'); bg.style.transform = on ? `translate3d(${(-px * 16).toFixed(1)}px, ${(-py * 12).toFixed(1)}px, 0) scale(1.03)` : ''; });
+      if (!raf) raf = requestAnimationFrame(() => { raf = 0; const on = set().parallax !== false && !C.reducedMotion() && !document.body.classList.contains('solving'); const tr = on ? `translate3d(${(-px * 16).toFixed(1)}px, ${(-py * 12).toFixed(1)}px, 0) scale(1.03)` : ''; bgs.forEach(b => b.style.transform = tr); });
     });
     // bottom navigation (phones)
     const bn = $('#botnav'); if (bn) bn.onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.hasAttribute('data-more')) openMore(); else go(b.dataset.view); };
@@ -854,7 +861,7 @@
   // ------------------------------------------------------------------ init
   function init() {
     S = loadLocal() || fresh();
-    engine = new BG.Engine($('#bg')); engine.P = palette(); engine.quality = set().quality; engine.set(set().bg); engine.start();
+    engine = new BG.Engine($('#bg'), $('#bgl')); engine.P = palette(); engine.quality = set().quality; engine.set(set().bg); engine.start();
     applySettings(); fillSelectors(); initVirtual(); bindKeys();
     newScramble();
     $('#tabs').onclick = e => { const b = e.target.closest('button'); if (b) go(b.dataset.view); };
@@ -878,6 +885,7 @@
     let rT = 0; window.addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(() => { if (App.view === 'timer') renderSolve(); else App.render[App.view] && App.render[App.view](App.sub); }, 150); });
     window.addEventListener('pagehide', () => Store.flush());
     document.addEventListener('visibilitychange', () => { if (document.hidden) Store.flush(); });
+    if (window.SolvoFX) window.SolvoFX.init();
     go((location.hash || '#timer').slice(1));
     Cloud.init();
   }

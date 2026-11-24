@@ -1,6 +1,6 @@
 /* Solvo Timer — offline support. Serves the app from cache, refreshes it in the background. */
-const CACHE = 'solvo-v4';
-const CORE = ['./', 'index.html', 'cube.js', 'bg.js', 'stats.js', 'algs.js', 'solvers.js', 'twophase.js', 'app.js', 'extras.js', 'train.js', 'play.js', 'views.js', 'scramble-worker.js', 'pwa.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'icon-maskable.png'];
+const CACHE = 'solvo-v5';
+const CORE = ['./', 'index.html', 'cube.js', 'shaders.js', 'bg.js', 'stats.js', 'algs.js', 'solvers.js', 'twophase.js', 'app.js', 'fx.js', 'extras.js', 'train.js', 'play.js', 'views.js', 'scramble-worker.js', 'pwa.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'icon-maskable.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {

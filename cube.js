@@ -206,13 +206,19 @@
     const N = cube.N, M = N - 1;
     const cy = Math.cos(view.yaw), sy = Math.sin(view.yaw), cp = Math.cos(view.pitch), sp = Math.sin(view.pitch);
     const tf = v => { const x1 = v[0] * cy + v[2] * sy, z1 = -v[0] * sy + v[2] * cy; return [x1, v[1] * cp - z1 * sp, v[1] * sp + z1 * cp]; };
-    const scale = Math.min(W, H) / (N * 2) / 2.0, cx = W / 2, cyy = H / 2 - scale * 0.15;
+    const ex = view.explode || 0, exK = ex * 0.55;
+    const scale = Math.min(W, H) / (N * 2) / 2.0 / (1 + ex * 0.45), cx = W / 2, cyy = H / 2 - scale * 0.15;
     const proj = v => { const t = tf(v); return [cx + t[0] * scale, cyy - t[1] * scale]; };
     // turning layer
     let rot = null;
     if (anim && anim.p && anim.f > 0 && anim.f < 1) {
       const { axis, dir, times, pred } = anim.p, ang = dir * times * Math.PI / 2 * anim.f, c = Math.cos(ang), s = Math.sin(ang), a1 = (axis + 1) % 3, a2 = (axis + 2) % 3;
       rot = { axis, pred, f: v => { const o = v.slice(); o[a1] = v[a1] * c - v[a2] * s; o[a2] = v[a1] * s + v[a2] * c; return o; } };
+    }
+    if (view.glow > 0.01) {
+      const n = parseInt(String(view.glowCol || '#a78bfa').slice(1), 16), rgb = (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255);
+      const gr = ctx.createRadialGradient(cx, cyy, 0, cx, cyy, scale * N * 2.6); gr.addColorStop(0, `rgba(${rgb},${(0.85 * view.glow).toFixed(3)})`); gr.addColorStop(0.5, `rgba(${rgb},${(0.26 * view.glow).toFixed(3)})`); gr.addColorStop(1, `rgba(${rgb},0)`);
+      ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
     }
     // soft floor shadow
     const sh = ctx.createRadialGradient(cx, cyy + scale * N * 1.55, 0, cx, cyy + scale * N * 1.55, scale * N * 1.5);
@@ -222,7 +228,7 @@
     // cubies (all positions while a layer turns, so the gap shows plastic, not holes)
     const cubies = new Map();
     for (const st of cube.st) { const k = st.p[0] + ',' + st.p[1] + ',' + st.p[2]; let cb = cubies.get(k); if (!cb) cubies.set(k, cb = { p: st.p, st: [] }); cb.st.push(st); }
-    if (rot) for (let x = -M; x <= M; x += 2) for (let y = -M; y <= M; y += 2) for (let z = -M; z <= M; z += 2) { const k = x + ',' + y + ',' + z; if (!cubies.has(k)) cubies.set(k, { p: [x, y, z], st: [] }); }
+    if (rot || ex > 0.001) for (let x = -M; x <= M; x += 2) for (let y = -M; y <= M; y += 2) for (let z = -M; z <= M; z += 2) { const k = x + ',' + y + ',' + z; if (!cubies.has(k)) cubies.set(k, { p: [x, y, z], st: [] }); }
     const list = [...cubies.values()];
     let mvMin = Infinity, mvMax = -Infinity;
     if (rot) for (const cb of list) if (rot.pred(cb.p)) { mvMin = Math.min(mvMin, cb.p[rot.axis]); mvMax = Math.max(mvMax, cb.p[rot.axis]); }
@@ -230,7 +236,8 @@
       cb.mv = !!(rot && rot.pred(cb.p));
       cb.grp = !rot ? 1 : cb.mv ? 1 : cb.p[rot.axis] < mvMin ? 0 : 2;
       cb.R = cb.mv ? rot.f : (v => v);
-      cb.z = tf(cb.R(cb.p))[2];
+      const rp = cb.R(cb.p); cb.off = [rp[0] * exK, rp[1] * exK, rp[2] * exK];
+      cb.z = tf(rp)[2];
     }
     // draw groups along the turning axis back-to-front, then cubies by depth inside each group
     const axisToward = rot ? tf(NORMALS[rot.axis * 2])[2] > 0 : true;
@@ -240,7 +247,7 @@
       for (const n of NORMALS) {
         const nr = cb.R(n), nt = tf(nr); if (nt[2] <= 0.002) continue;
         const ax = [0, 1, 2].filter(i => n[i] === 0), c = [cb.p[0] + n[0], cb.p[1] + n[1], cb.p[2] + n[2]];
-        const corner = (da, db, sz) => { const v = c.slice(); v[ax[0]] += da * sz; v[ax[1]] += db * sz; return proj(cb.R(v)); };
+        const corner = (da, db, sz) => { const v = c.slice(); v[ax[0]] += da * sz; v[ax[1]] += db * sz; const w = cb.R(v); return proj([w[0] + cb.off[0], w[1] + cb.off[1], w[2] + cb.off[2]]); };
         const light = Math.max(0, nt[0] * LIGHT[0] + nt[1] * LIGHT[1] + nt[2] * LIGHT[2]);
         const body = [corner(-1, -1, k), corner(1, -1, k), corner(1, 1, k), corner(-1, 1, k)];
         const g = Math.round(14 + 18 * light);
@@ -262,9 +269,10 @@
   // Plays queued moves on a display copy of a cube; the logical cube never waits for the animation.
   class Animator {
     constructor(getCanvas, view, dur) { this.getCanvas = getCanvas; this.view = view; this.dur = dur || 120; this.cube = null; this.q = []; this.cur = null; this.raf = 0; }
-    reset(cube) { cancelAnimationFrame(this.raf); this.raf = 0; this.q = []; this.cur = null; this.cube = cube ? cube.clone() : null; this.draw(); }
+    reset(cube) { if (this.cel) { this.pending = cube ? cube.clone() : null; return; } cancelAnimationFrame(this.raf); this.raf = 0; this.q = []; this.cur = null; this.cube = cube ? cube.clone() : null; this.draw(); }
     idle() { return !this.cur && !this.q.length; }
     push(m) {
+      if (this.cel) { if (this.pending) this.pending.move(m); return; }
       if (!this.cube) return;
       if (reducedMotion()) { this.cube.move(m); this.draw(); return; }
       this.q.push(m);
@@ -281,6 +289,29 @@
       this.raf = requestAnimationFrame(t => this.step(t));
     }
     draw(anim) { const c = this.getCanvas(); if (c && this.cube && c.isConnected) draw3D(c, this.cube, this.view, anim); }
+    // solved! spin the cube apart and back together with a glow, then show whatever came next
+    celebrate(col) {
+      if (reducedMotion() || !this.cube || this.cel) return;
+      const v = this.view; this.cel = { y0: v.yaw, p0: v.pitch }; this.pending = undefined;
+      const finish = () => {
+        v.yaw = this.cel.y0; v.pitch = this.cel.p0; v.explode = 0; v.glow = 0; this.cel = null; this.craf = 0;
+        if (this.pending !== undefined) { const p = this.pending; this.pending = undefined; this.q = []; this.cur = null; this.cube = p; }
+        this.draw();
+      };
+      const begin = () => {
+        if (!this.idle()) { this.craf = requestAnimationFrame(begin); return; }
+        const t0 = performance.now(), D = 1450; v.glowCol = col;
+        const step = now => {
+          const k = Math.min(1, (now - t0) / D), e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+          v.yaw = this.cel.y0 + e * Math.PI * 2; v.pitch = this.cel.p0 + Math.sin(Math.PI * k) * 0.22;
+          v.explode = Math.sin(Math.PI * Math.min(1, k * 1.2)); v.glow = Math.sin(Math.PI * k);
+          this.draw();
+          if (k < 1 && this.getCanvas() && this.getCanvas().isConnected) this.craf = requestAnimationFrame(step); else finish();
+        };
+        this.craf = requestAnimationFrame(step);
+      };
+      begin();
+    }
   }
 
   // ----- virtual cube keymap (csTimer-style layout) -----

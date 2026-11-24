@@ -257,9 +257,9 @@
         const g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, BG.mix(pal.shadow, pal.mid, 0.4)); g.addColorStop(1, pal.shadow); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
         C.draw3D(layer, cube, view, an ? { p: cube.parse(mv[an.i][0]), f: C.easeOut(an.f) } : undefined); ctx.drawImage(layer, 0, 40);
         const ph = phaseAt(k);
-        ctx.fillStyle = '#fff'; ctx.font = '800 64px Outfit, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(St.fmt(clamp(t, 0, dur)), W / 2, H - 50);
-        ctx.font = '600 22px Inter, sans-serif'; ctx.fillStyle = ph ? PH_COL[ph.name] : '#c9c2e6'; ctx.fillText(ph && t > 0 ? ph.name : 'Inspection', W / 2, 44);
-        ctx.font = '500 16px "JetBrains Mono", monospace'; ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fillText('Solvo Timer', W / 2, H - 18);
+        ctx.fillStyle = '#fff'; ctx.font = '800 64px Unbounded, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(St.fmt(clamp(t, 0, dur)), W / 2, H - 50);
+        ctx.font = '600 22px Manrope, sans-serif'; ctx.fillStyle = ph ? PH_COL[ph.name] : '#c9c2e6'; ctx.fillText(ph && t > 0 ? ph.name : 'Inspection', W / 2, 44);
+        ctx.font = '500 16px "Geist Mono", monospace'; ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fillText('Solvo Timer', W / 2, H - 18);
         if (t < dur + 1200) requestAnimationFrame(frame); else resolve();
       };
       requestAnimationFrame(frame);
@@ -328,11 +328,11 @@
       ${!la ? `<div class="glass" style="padding:10px 14px;font-size:13px;border-color:rgba(251,191,36,0.35)"><b style="color:var(--warn)">Lookahead coach is waiting.</b> It works with the virtual cube on 3×3. Your timer and typed times still count for missions. <button class="btn sm" id="useVC" style="margin-left:8px">Use the virtual cube</button></div>` : ''}
       <div class="grid2"><section class="card glass"><div class="card-h"><h3>Daily missions · ${new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}</h3></div>${missionsHTML(false)}</section>
         <section class="card glass"><div class="card-h"><h3>Lookahead coach</h3><span class="muted" style="font-size:12px">${la ? la.n + ' virtual 3×3 solves analysed' : 'no replays yet'}</span></div>
-          ${la ? `<div style="display:flex;gap:16px;align-items:center"><svg class="gauge" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="9"/><circle cx="50" cy="50" r="42" fill="none" stroke="var(--accent)" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(la.score / 100 * 264).toFixed(1)} 264" transform="rotate(-90 50 50)"/><text x="50" y="57" text-anchor="middle" style="font:800 24px Outfit,sans-serif;fill:var(--ink)">${la.score}</text></svg>
+          ${la ? `<div style="display:flex;gap:16px;align-items:center"><svg class="gauge" viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="9"/><circle cx="50" cy="50" r="42" fill="none" stroke="var(--accent)" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(la.score / 100 * 264).toFixed(1)} 264" transform="rotate(-90 50 50)"/><text x="50" y="57" text-anchor="middle" style="font:800 24px Unbounded,sans-serif;fill:var(--ink)">${la.score}</text></svg>
             <div class="stat-grid" style="flex:1;grid-template-columns:repeat(2,1fr)"><div><div class="eyebrow">Pauses ≥ 0.5 s</div><b class="mono">${la.pausesPer.toFixed(1)} / solve</b></div><div><div class="eyebrow">Longest stop</div><b class="mono">${la.longest.toFixed(2)} s</b></div><div><div class="eyebrow">Average TPS</div><b class="mono">${la.tps.toFixed(1)}</b></div><div><div class="eyebrow">Score</div><b class="mono">${la.score} / 100</b></div></div></div>` : '<div class="empty">Solve with the virtual cube to get a lookahead score.</div>'}
         </section></div>
       <div class="grid2"><section class="card glass"><div class="card-h"><h3>Phase balance</h3><span class="muted" style="font-size:12px">your split vs a typical CFOP split</span></div>
-          ${la && la.split ? (() => { const tot = la.split.reduce((a, p) => a + p.t, 0); return ['You', 'Typical'].map(who => `<div style="margin:8px 0"><div class="eyebrow" style="margin-bottom:4px">${who}</div><div style="display:flex;height:22px;border-radius:6px;overflow:hidden">${la.split.map(p => { const f = who === 'You' ? p.t / tot : REF[p.name]; return `<i style="flex:${f};background:${PH_COL[p.name]};display:grid;place-items:center;font:600 10px Inter;color:#160e2e">${Math.round(f * 100)}%</i>`; }).join('')}</div></div>`).join('') + `<table class="tbl" style="margin-top:8px"><thead><tr><th>Phase</th><th>Avg time</th><th>Avg moves</th></tr></thead><tbody>${la.split.map(p => `<tr><td style="color:var(--ink)"><span class="phase-dot" style="background:${PH_COL[p.name]}"></span>${p.name}</td><td>${(p.t / 1000).toFixed(2)}</td><td>${p.mv.toFixed(1)}</td></tr>`).join('')}</tbody></table>`; })() : '<div class="empty">Needs virtual-cube solves with a detectable cross.</div>'}</section>
+          ${la && la.split ? (() => { const tot = la.split.reduce((a, p) => a + p.t, 0); return ['You', 'Typical'].map(who => `<div style="margin:8px 0"><div class="eyebrow" style="margin-bottom:4px">${who}</div><div style="display:flex;height:22px;border-radius:6px;overflow:hidden">${la.split.map(p => { const f = who === 'You' ? p.t / tot : REF[p.name]; return `<i style="flex:${f};background:${PH_COL[p.name]};display:grid;place-items:center;font:600 10px Manrope;color:#160e2e">${Math.round(f * 100)}%</i>`; }).join('')}</div></div>`).join('') + `<table class="tbl" style="margin-top:8px"><thead><tr><th>Phase</th><th>Avg time</th><th>Avg moves</th></tr></thead><tbody>${la.split.map(p => `<tr><td style="color:var(--ink)"><span class="phase-dot" style="background:${PH_COL[p.name]}"></span>${p.name}</td><td>${(p.t / 1000).toFixed(2)}</td><td>${p.mv.toFixed(1)}</td></tr>`).join('')}</tbody></table>`; })() : '<div class="empty">Needs virtual-cube solves with a detectable cross.</div>'}</section>
         <section class="card glass"><div class="card-h"><h3>What to practise next</h3></div><ul class="hl">${tips.map(t => `<li><span>→</span><span><b style="font-family:var(--f-body)">${esc(t.name)}.</b> ${esc(t.text)}</span></li>`).join('')}</ul></section></div>
       ${(() => { const bs = A.badgeStatus ? A.badgeStatus() : []; const got = bs.filter(b => b.at).length; return `<section class="card glass"><div class="card-h"><h3>Badges · ${got} of ${bs.length}</h3><span class="muted" style="font-size:12px">Demo solves don't count</span></div><div class="badges">${bs.sort((a, b) => (b.at ? 1 : 0) - (a.at ? 1 : 0) || b.p - a.p).map(b => `<div class="badge ${b.at ? 'on' : ''}" title="${esc(b.desc)}">${A.medal(b, 54)}<div><div class="bn">${esc(b.name)}</div><div class="bd">${esc(b.desc)}</div>${b.at ? `<div class="bt">Unlocked ${new Date(b.at).toLocaleDateString()}</div>` : `<div class="bar" style="margin-top:5px"><i style="width:${Math.round(b.p * 100)}%"></i></div><div class="bt">${esc(b.label)}</div>`}</div></div>`).join('')}</div></section>`; })()}
     </div>`;
@@ -399,7 +399,7 @@
   // =============================================================== SETTINGS
   const SECTIONS = [
     ['Essentials', [['essentials', 'Essentials'], ['solving', 'While solving']]],
-    ['Appearance', [['themes', 'Themes'], ['colours', 'Colours & timer font'], ['backgrounds', 'Backgrounds'], ['glass', 'Cards & glass']]],
+    ['Appearance', [['themes', 'Themes'], ['colours', 'Colours & timer font'], ['backgrounds', 'Backgrounds'], ['effects', 'Effects'], ['glass', 'Cards & glass']]],
     ['Training', [['coach', 'Coach modes'], ['goals', 'Session goals']]],
     ['Workspace', [['sessions', 'Sessions'], ['scramble', 'Scramble'], ['keys', 'Virtual cube keys'], ['smart', 'Smart cube & timer'], ['shortcuts', 'Shortcuts']]],
     ['Data', [['data', 'Import & export']]]
@@ -413,16 +413,19 @@
     (SET[sub] || SET.essentials)($('#setBody'));
   };
   const THEMES = [
-    { id: 'amethyst', name: 'Amethyst', bg: 'bubbles', pal: 0, accent: '#a78bfa', blur: 14, glassA: 0.58, radius: 14, font: 'bold', speed: 1 },
+    { id: 'amethyst', name: 'Amethyst Nebula', bg: 'gl-nebula', pal: 0, accent: '#a78bfa', blur: 14, glassA: 0.5, radius: 14, font: 'wide', speed: 1 },
+    { id: 'rubik', name: 'Rubik Field', bg: 'gl-rubik', pal: 4, accent: '#facc15', blur: 12, glassA: 0.55, radius: 12, font: 'wide', speed: 1 },
+    { id: 'neon', name: 'Synthwave', bg: 'gl-synth', pal: 9, accent: '#22d3ee', blur: 8, glassA: 0.6, radius: 6, font: 'future', speed: 1 },
+    { id: 'hyper', name: 'Hyperdrive', bg: 'gl-warp', pal: 9, accent: '#f472b6', blur: 10, glassA: 0.55, radius: 10, font: 'arena', speed: 1 },
+    { id: 'ocean', name: 'Liquid Chrome', bg: 'gl-chrome', pal: 2, accent: '#5eead4', blur: 18, glassA: 0.45, radius: 16, font: 'wide', speed: 1 },
+    { id: 'storm', name: 'Electric Storm', bg: 'gl-storm', pal: 0, accent: '#c084fc', blur: 12, glassA: 0.55, radius: 12, font: 'future', speed: 1 },
+    { id: 'ember', name: 'Ember Ink', bg: 'gl-ink', pal: 3, accent: '#fb923c', blur: 12, glassA: 0.58, radius: 12, font: 'arena', speed: 1 },
+    { id: 'aurora', name: 'Aurora', bg: 'gl-aurora', pal: 4, accent: '#7dd3fc', blur: 14, glassA: 0.5, radius: 16, font: 'thin', speed: 1 },
+    { id: 'horizon', name: 'Spiral Galaxy', bg: 'gl-galaxy', pal: 8, accent: '#fde68a', blur: 12, glassA: 0.55, radius: 10, font: 'future', speed: 1 },
+    { id: 'stackmat', name: 'Voronoi Stackmat', bg: 'gl-voronoi', pal: 5, accent: '#a3e635', blur: 10, glassA: 0.62, radius: 8, font: 'digital', speed: 1 },
     { id: 'sakura', name: 'Sakura Night', bg: 'sakura', pal: 7, accent: '#f9a8c9', blur: 16, glassA: 0.5, radius: 18, font: 'thin', speed: 0.8 },
-    { id: 'neon', name: 'Neon Arcade', bg: 'scramblerain', pal: 9, accent: '#22d3ee', blur: 8, glassA: 0.7, radius: 6, font: 'future', speed: 1.2 },
-    { id: 'ocean', name: 'Ocean Glass', bg: 'rain', pal: 2, accent: '#5eead4', blur: 18, glassA: 0.45, radius: 16, font: 'bold', speed: 1 },
-    { id: 'ember', name: 'Ember', bg: 'plasma', pal: 3, accent: '#fb923c', blur: 12, glassA: 0.62, radius: 12, font: 'bold', speed: 0.7 },
     { id: 'mono', name: 'Minimal Mono', bg: 'studio', pal: 6, accent: '#e4e4e7', blur: 0, glassA: 0.82, radius: 6, font: 'mono', speed: 0.6 },
-    { id: 'aurora', name: 'Aurora', bg: 'aurora', pal: 4, accent: '#7dd3fc', blur: 14, glassA: 0.5, radius: 16, font: 'thin', speed: 1 },
     { id: 'topo', name: 'Topo Rose', bg: 'topo', pal: 1, accent: '#f9a8d4', blur: 14, glassA: 0.55, radius: 14, font: 'bold', speed: 0.8 },
-    { id: 'horizon', name: 'Event Horizon', bg: 'horizon', pal: 8, accent: '#fde68a', blur: 12, glassA: 0.6, radius: 10, font: 'future', speed: 1 },
-    { id: 'stackmat', name: 'Stackmat', bg: 'hex', pal: 5, accent: '#a3e635', blur: 10, glassA: 0.66, radius: 8, font: 'digital', speed: 0.9 },
   ];
   A.THEMES = THEMES;
   const s = () => A.set();
@@ -474,9 +477,9 @@
     },
     backgrounds(el) {
       const P = A.palette();
-      el.innerHTML = `<h2>Backgrounds</h2><p>Current: <b>${(BG.scenes.find(x => x.id === s().bg) || {}).name}</b>. Laggy? Lower the quality below. Animated scenes run best in Chrome or Edge.</p>
+      el.innerHTML = `<h2>Backgrounds</h2><p>Current: <b>${(BG.scenes.find(x => x.id === s().bg) || {}).name}</b>. ${BG.glAvailable() ? 'Scenes marked GPU run on your graphics chip and lower their resolution by themselves if your device struggles.' : 'This browser has no fast GPU path, so scenes marked GPU show a 2D version.'} Still laggy? Lower the quality below.</p>
         <div style="display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:16px" class="bgwrap">
-          <div class="bg-grid" id="bgGrid">${BG.scenes.map((sc, i) => `<button class="bg-tile ${sc.id === s().bg ? 'on' : ''}" data-id="${sc.id}"><canvas width="208" height="130"></canvas><span>${i + 1} · ${sc.name}</span></button>`).join('')}</div>
+          <div class="bg-grid" id="bgGrid">${BG.scenes.map((sc, i) => `<button class="bg-tile ${sc.id === s().bg ? 'on' : ''}" data-id="${sc.id}"><canvas width="208" height="130"></canvas><span>${i + 1} · ${sc.name}${sc.gl ? ' <em class="gpu">GPU</em>' : ''}</span></button>`).join('')}</div>
           <div class="glass" style="padding:12px;align-self:start;display:grid;gap:12px">
             <div class="eyebrow">Background controls</div>
             <div><div style="display:flex;justify-content:space-between;font-size:12.5px"><label for="oSpd">Speed</label><b class="mono" id="oSpdV">${s().bgSpeed.toFixed(1)}×</b></div><input type="range" id="oSpd" min="0" max="3" step="0.1" value="${s().bgSpeed}" style="width:100%"></div>
@@ -492,6 +495,21 @@
       $$('.pal', el).forEach(b => b.onclick = () => { s().palette = b.dataset.p === 'custom' ? 'custom' : +b.dataset.p; save(true); });
       $$('input[data-k]', el).forEach(i => i.onchange = () => { s().customPal[i.dataset.k] = i.value; s().palette = 'custom'; save(true); });
       $('#oFrz', el).onchange = e => { s().freeze = e.target.checked; save(); };
+    },
+    effects(el) {
+      const red = A.C.reducedMotion();
+      el.innerHTML = `<h2>Effects</h2><p>Motion that reacts to your solving.${red ? ' <b>Your device asks for reduced motion, so effects are paused.</b>' : ''}</p>
+        ${tog('oFxR', 'Reactive background', 'The background charges up while you solve, turns red while you hold, green when you can go, and flashes when inspection runs late.', s().fxReactive)}
+        ${tog('oFxS', 'Shockwaves', 'A ring blasts out from the time when you start and stop.', s().fxShock)}
+        ${tog('oFxF', 'Fireworks', 'Fireworks instead of confetti for PBs and new badges.', s().fxFireworks)}
+        ${tog('oFxT', 'Cursor trail', 'A short glowing trail follows the mouse. Hidden while you solve.', s().fxTrail)}
+        ${tog('oFxTi', 'Card tilt and spotlight', 'Cards lean toward the mouse and light up under it.', s().fxTilt)}
+        <div class="row"><div><label for="oFxI">Intensity</label><div class="d">How big the bursts and the background charge-up are: <b class="mono" id="oFxIV">${Math.round(s().fxIntensity * 100)}%</b></div></div><input type="range" id="oFxI" min="0.3" max="1.5" step="0.1" value="${s().fxIntensity}"></div>
+        <div class="row-actions" style="margin-top:14px"><button class="btn primary" id="fxTry">${A.icon('spark')} Preview a PB</button><button class="btn" id="fxBg">GPU backgrounds</button></div>`;
+      bindTog(el, 'oFxR', 'fxReactive'); bindTog(el, 'oFxS', 'fxShock'); bindTog(el, 'oFxF', 'fxFireworks'); bindTog(el, 'oFxT', 'fxTrail'); bindTog(el, 'oFxTi', 'fxTilt');
+      $('#oFxI', el).oninput = e => { s().fxIntensity = +e.target.value; $('#oFxIV', el).textContent = Math.round(s().fxIntensity * 100) + '%'; save(); };
+      $('#fxTry', el).onclick = () => { if (window.SolvoFX) window.SolvoFX.preview(); };
+      $('#fxBg', el).onclick = () => A.render.options('backgrounds');
     },
     glass(el) {
       el.innerHTML = `<h2>Cards & glass</h2><p>How the boxes sit on top of the background.</p>

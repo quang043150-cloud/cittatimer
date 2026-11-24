@@ -182,7 +182,7 @@
     const s = size || 56, [hi, lo] = TIER[b.tier], gid = 'g' + b.id + s, on = !!(b.at || b.done);
     const hex = [0, 1, 2, 3, 4, 5].map(i => { const a = Math.PI / 3 * i - Math.PI / 2; return `${(50 + 44 * Math.cos(a)).toFixed(1)},${(50 + 44 * Math.sin(a)).toFixed(1)}`; }).join(' ');
     const glyphSize = b.glyph.length > 2 ? 22 : b.glyph.length > 1 ? 28 : 34;
-    return `<svg width="${s}" height="${s}" viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${on ? hi : '#3a3452'}"/><stop offset="1" stop-color="${on ? lo : '#211c33'}"/></linearGradient></defs><polygon points="${hex}" fill="url(#${gid})" stroke="${on ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.14)'}" stroke-width="3" ${on ? '' : 'stroke-dasharray="6 5"'}/><text x="50" y="${50 + glyphSize * 0.36}" text-anchor="middle" style="font:800 ${glyphSize}px Outfit,sans-serif;fill:${on ? '#1a1030' : '#6e6690'}">${esc(b.glyph)}</text></svg>`;
+    return `<svg width="${s}" height="${s}" viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${on ? hi : '#3a3452'}"/><stop offset="1" stop-color="${on ? lo : '#211c33'}"/></linearGradient></defs><polygon points="${hex}" fill="url(#${gid})" stroke="${on ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.14)'}" stroke-width="3" ${on ? '' : 'stroke-dasharray="6 5"'}/><text x="50" y="${50 + glyphSize * 0.36}" text-anchor="middle" style="font:800 ${glyphSize}px Unbounded,sans-serif;fill:${on ? '#1a1030' : '#6e6690'}">${esc(b.glyph)}</text></svg>`;
   };
 
   // ================================================================ SHARE CARD
@@ -211,8 +211,8 @@
   };
   async function renderCard(ui) {
     const W = 1080, H = ui.ratio === '1:1' ? 1080 : 1920, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d');
-    try { await Promise.all(['800 200px Outfit', '700 60px Outfit', '600 40px Inter', '700 50px "JetBrains Mono"'].map(f => document.fonts.load(f))); } catch (e) { }
-    const P = A.palette(), sc = (BG.scenes.find(s => s.id === ui.bg) || BG.scenes[0]).make(ctx); sc.resize(W, H); try { sc.frame(9, P); } catch (e) { }
+    try { await Promise.all(['800 200px Unbounded', '700 60px Unbounded', '600 40px Manrope', '700 50px "Geist Mono"'].map(f => document.fonts.load(f))); } catch (e) { }
+    const P = A.palette(); BG.paint(ctx, ui.bg, P, W, H, 9);
     const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, 'rgba(8,5,18,0.25)'); g.addColorStop(0.55, 'rgba(8,5,18,0.45)'); g.addColorStop(1, 'rgba(8,5,18,0.82)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     const accent = A.set().accent, list = A.solves(), sq = H === W, pad = 80;
     const glass = (x, y, w, h, r) => { ctx.fillStyle = 'rgba(14,9,30,0.55)'; C.roundRect(ctx, x, y, w, h, r || 36); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.14)'; ctx.lineWidth = 2; ctx.stroke(); };
@@ -220,21 +220,21 @@
     // header
     ctx.fillStyle = accent; C.roundRect(ctx, pad, pad, 72, 72, 18); ctx.fill();
     ctx.fillStyle = '#160e2e'; for (let i = 0; i < 9; i++) { if (i === 4) continue; ctx.fillRect(pad + 14 + (i % 3) * 16, pad + 14 + Math.floor(i / 3) * 16, 12, 12); }
-    text('SOLVO TIMER', pad + 96, pad + 48, '700 34px Outfit, sans-serif', '#ffffff');
-    text(A.EVENTS[A.event()], W - pad, pad + 48, '600 34px Inter, sans-serif', 'rgba(255,255,255,0.75)', 'right');
+    text('SOLVO TIMER', pad + 96, pad + 48, '700 34px Unbounded, sans-serif', '#ffffff');
+    text(A.EVENTS[A.event()], W - pad, pad + 48, '600 34px Manrope, sans-serif', 'rgba(255,255,255,0.75)', 'right');
     const big = (label, value, sub) => {
       const y0 = sq ? 300 : 560;
-      text(label.toUpperCase(), W / 2, y0, '700 40px Inter, sans-serif', accent, 'center');
-      let fs = sq ? 250 : 300; ctx.font = `800 ${fs}px Outfit, sans-serif`; while (fs > 60 && ctx.measureText(value).width > W - pad * 2) { fs -= 10; ctx.font = `800 ${fs}px Outfit, sans-serif`; }
-      ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.45)'; ctx.shadowBlur = 40; text(value, W / 2, y0 + (sq ? 230 : 290), `800 ${fs}px Outfit, sans-serif`, '#ffffff', 'center'); ctx.restore();
-      if (sub) text(sub, W / 2, y0 + (sq ? 300 : 380), '600 38px Inter, sans-serif', 'rgba(255,255,255,0.75)', 'center');
+      text(label.toUpperCase(), W / 2, y0, '700 40px Manrope, sans-serif', accent, 'center');
+      let fs = sq ? 250 : 300; ctx.font = `800 ${fs}px Unbounded, sans-serif`; while (fs > 60 && ctx.measureText(value).width > W - pad * 2) { fs -= 10; ctx.font = `800 ${fs}px Unbounded, sans-serif`; }
+      ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.45)'; ctx.shadowBlur = 40; text(value, W / 2, y0 + (sq ? 230 : 290), `800 ${fs}px Unbounded, sans-serif`, '#ffffff', 'center'); ctx.restore();
+      if (sub) text(sub, W / 2, y0 + (sq ? 300 : 380), '600 38px Manrope, sans-serif', 'rgba(255,255,255,0.75)', 'center');
     };
-    const tiles = (items, y) => { const w = (W - pad * 2 - 40) / 3; items.forEach(([k, v], i) => { const x = pad + i * (w + 20); glass(x, y, w, 170, 30); text(k.toUpperCase(), x + w / 2, y + 60, '700 28px Inter, sans-serif', 'rgba(255,255,255,0.6)', 'center'); text(v, x + w / 2, y + 128, '700 54px "JetBrains Mono", monospace', '#fde68a', 'center'); }); };
+    const tiles = (items, y) => { const w = (W - pad * 2 - 40) / 3; items.forEach(([k, v], i) => { const x = pad + i * (w + 20); glass(x, y, w, 170, 30); text(k.toUpperCase(), x + w / 2, y + 60, '700 28px Manrope, sans-serif', 'rgba(255,255,255,0.6)', 'center'); text(v, x + w / 2, y + 128, '700 54px "Geist Mono", monospace', '#fde68a', 'center'); }); };
     const chart = (vals, x, y, w, h, color) => {
       const v = vals.filter(a => a != null && isFinite(a)); if (v.length < 2) return; let lo = Math.min(...v), hi = Math.max(...v); if (hi - lo < 1) { hi += 500; lo -= 500; }
       ctx.beginPath(); let pen = false; vals.forEach((a, i) => { if (a == null || !isFinite(a)) { pen = false; return; } const px = x + i / (vals.length - 1) * w, py = y + (hi - a) / (hi - lo) * h; pen ? ctx.lineTo(px, py) : ctx.moveTo(px, py); pen = true; });
       ctx.strokeStyle = color; ctx.lineWidth = 6; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.stroke();
-      text(St.fmt(hi), x, y - 14, '600 26px "JetBrains Mono", monospace', 'rgba(255,255,255,0.55)'); text(St.fmt(lo), x, y + h + 40, '600 26px "JetBrains Mono", monospace', 'rgba(255,255,255,0.55)');
+      text(St.fmt(hi), x, y - 14, '600 26px "Geist Mono", monospace', 'rgba(255,255,255,0.55)'); text(St.fmt(lo), x, y + h + 40, '600 26px "Geist Mono", monospace', 'rgba(255,255,255,0.55)');
     };
     const date = d => new Date(d).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
     const tileY = sq ? 680 : 1080;
@@ -242,16 +242,16 @@
       const r = ui.kind === 'single' ? St.best(list) : St.bestRolling(list, ui.kind === 'ao5' ? 5 : 12);
       big(ui.kind === 'single' ? 'Personal best · single' : `Personal best · ${ui.kind}`, St.fmt(r.v), r.at >= 0 ? date(list[r.at].d) : 'Solve more to set a PB');
       tiles(ui.kind === 'single' ? [['ao5', St.fmt(St.bestRolling(list, 5).v)], ['ao12', St.fmt(St.bestRolling(list, 12).v)], ['solves', list.length.toLocaleString()]] : [['single', St.fmt(St.best(list).v)], [ui.kind === 'ao5' ? 'ao12' : 'ao5', St.fmt(St.bestRolling(list, ui.kind === 'ao5' ? 12 : 5).v)], ['solves', list.length.toLocaleString()]], tileY);
-      if (!sq) { glass(pad, 1300, W - pad * 2, 380); text('LAST 50 SOLVES', pad + 40, 1360, '700 28px Inter, sans-serif', 'rgba(255,255,255,0.6)'); chart(list.slice(-50).map(St.val), pad + 50, 1420, W - pad * 2 - 100, 200, accent); }
+      if (!sq) { glass(pad, 1300, W - pad * 2, 380); text('LAST 50 SOLVES', pad + 40, 1360, '700 28px Manrope, sans-serif', 'rgba(255,255,255,0.6)'); chart(list.slice(-50).map(St.val), pad + 50, 1420, W - pad * 2 - 100, 200, accent); }
     } else if (ui.kind === 'session' || ui.kind === 'comp') {
       if (ui.kind === 'comp' && ui.comp) {
         big(`Comp practice · round ${ui.comp.round}`, St.fmt(ui.comp.avg), 'Average of 5');
         const y = sq ? 640 : 1040; glass(pad, y, W - pad * 2, sq ? 330 : 420);
-        ui.comp.times.forEach((t, i) => text(`${i + 1}.  ${t}`, pad + 60, y + 80 + i * (sq ? 50 : 66), '700 44px "JetBrains Mono", monospace', '#ffffff'));
+        ui.comp.times.forEach((t, i) => text(`${i + 1}.  ${t}`, pad + 60, y + 80 + i * (sq ? 50 : 66), '700 44px "Geist Mono", monospace', '#ffffff'));
       } else {
         big(A.session().name, list.length.toLocaleString() + ' solves', `mean ${St.fmt(St.mean(list))}`);
         tiles([['best', St.fmt(St.best(list).v)], ['ao5', St.fmt(St.aoN(list, 5))], ['ao12', St.fmt(St.aoN(list, 12))]], tileY);
-        if (!sq) { glass(pad, 1300, W - pad * 2, 380); text('SOLVE TIMES', pad + 40, 1360, '700 28px Inter, sans-serif', 'rgba(255,255,255,0.6)'); chart(list.slice(-100).map(St.val), pad + 50, 1420, W - pad * 2 - 100, 200, accent); }
+        if (!sq) { glass(pad, 1300, W - pad * 2, 380); text('SOLVE TIMES', pad + 40, 1360, '700 28px Manrope, sans-serif', 'rgba(255,255,255,0.6)'); chart(list.slice(-100).map(St.val), pad + 50, 1420, W - pad * 2 - 100, 200, accent); }
       }
     } else if (ui.kind === 'progress') {
       const n = list.length >= 100 ? 100 : 12, roll = St.rolling(list, n), vals = roll.filter(v => v != null && isFinite(v));
@@ -262,8 +262,8 @@
     }
     // footer
     const fy = H - pad;
-    if (ui.handle) text(ui.handle, pad, fy, '700 40px Inter, sans-serif', '#ffffff');
-    text(date(Date.now()), W - pad, fy, '600 32px Inter, sans-serif', 'rgba(255,255,255,0.6)', 'right');
+    if (ui.handle) text(ui.handle, pad, fy, '700 40px Manrope, sans-serif', '#ffffff');
+    text(date(Date.now()), W - pad, fy, '600 32px Manrope, sans-serif', 'rgba(255,255,255,0.6)', 'right');
     return cv;
   }
 

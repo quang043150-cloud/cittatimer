@@ -295,7 +295,7 @@
       resize(W, H) { w = W; h = H; const r = rand(4); cols = []; for (let x = 0; x < w; x += 34) cols.push({ x, sp: 30 + r() * 70, off: r() * h, seed: Math.floor(r() * 1000) }); },
       frame(t, P) {
         ctx.fillStyle = P.shadow; ctx.fillRect(0, 0, w, h);
-        ctx.font = '600 15px "JetBrains Mono", ui-monospace, monospace'; ctx.textAlign = 'center';
+        ctx.font = '600 15px "Geist Mono", ui-monospace, monospace'; ctx.textAlign = 'center';
         for (const c of cols) {
           const head = (c.off + t * c.sp) % (h + 400);
           for (let i = 0; i < 16; i++) {
@@ -334,37 +334,86 @@
     { name: 'Cyber', shadow: '#0a0614', mid: '#db2777', high: '#22d3ee' },
   ];
 
-  // Engine: one live scene on a canvas
+  // GPU scenes (shaders.js) come first. Each names a 2D look-alike for browsers without WebGL.
+  const GLS = window.SolvoShaders;
+  const FB = { 'gl-nebula': 'nebula', 'gl-aurora': 'aurora', 'gl-chrome': 'silk', 'gl-warp': 'hyper', 'gl-synth': 'ribbons', 'gl-rubik': 'scramblerain', 'gl-voronoi': 'hex', 'gl-galaxy': 'horizon', 'gl-storm': 'plasma', 'gl-ink': 'silk' };
+  if (GLS) GLS.scenes.slice().reverse().forEach(s => { s.fb = FB[s.id] || 'nebula'; scenes.unshift(s); });
+  const find = id => scenes.find(x => x.id === id) || scenes[0];
+  const fxState = () => (window.SolvoFX && window.SolvoFX.state) || null;
+
+  // one shared offscreen WebGL context for thumbnails and share cards
+  let offGL = null;
+  function offscreen() { if (offGL === null) { try { offGL = GLS ? new GLS.GL(document.createElement('canvas')) : false; } catch (e) { offGL = false; } if (offGL && !offGL.ok()) offGL = false; } return offGL; }
+  function paint(ctx, id, P, w, h, t) {
+    let s = find(id);
+    if (s.gl) {
+      const g = offscreen();
+      if (g) { g.c.width = w; g.c.height = h; if (g.render(s, w, h, t, P, null)) { ctx.drawImage(g.c, 0, 0, w, h); return; } }
+      s = find(s.fb);
+    }
+    const sc = s.make(ctx); sc.resize(w, h); try { sc.frame(t, P); } catch (e) { }
+  }
+  function thumb(id, P, w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; paint(c.getContext('2d'), id, P, w, h, 6); return c; }
+  const glAvailable = () => !!offscreen();
+
+  // Engine: one live scene. 2D scenes draw on `canvas`, GPU scenes on `glCanvas`.
   class Engine {
-    constructor(canvas) {
-      this.c = canvas; this.ctx = canvas.getContext('2d'); this.t = 0; this.speed = 1; this.frozen = false; this.last = 0; this.P = PALETTES[0];
+    constructor(canvas, glCanvas) {
+      this.c = canvas; this.ctx = canvas.getContext('2d'); this.gc = glCanvas || null; this.glr = null;
+      this.t = 0; this.speed = 1; this.frozen = false; this.last = 0; this.P = PALETTES[0];
+      this.dyn = 1; this.maxDyn = 1; this.ft = []; this.warm = 0; this.isGL = false;
       this.reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
       this._loop = this._loop.bind(this); this.resize = this.resize.bind(this);
       window.addEventListener('resize', this.resize);
     }
-    set(id) { const s = scenes.find(x => x.id === id) || scenes[0]; this.id = s.id; this.scene = s.make(this.ctx); this.resize(); }
-    resize() {
-      const q = this.quality || 1, dpr = Math.min(window.devicePixelRatio || 1, 1.5) * q;
-      const W = window.innerWidth, H = window.innerHeight; this.c.width = Math.round(W * dpr); this.c.height = Math.round(H * dpr);
-      this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0); this.scene && this.scene.resize(W, H); this.draw();
+    gl() { if (!this.glr && this.gc && GLS) { try { this.glr = new GLS.GL(this.gc); } catch (e) { this.glr = null; } } return this.glr && this.glr.gl ? this.glr : null; }
+    set(id) {
+      this.id = id; let s = find(id);
+      if (s.gl) { const g = this.gl(); if (!g || !g.prog(s)) { if (g && g.errors[s.id]) console.warn('Solvo shader ' + s.id + ':', g.errors[s.id]); s = find(s.fb); } }
+      this.use(s);
     }
-    draw() { try { this.scene && this.scene.frame(this.t, this.P); } catch (e) { console.error(e); } }
+    use(s) {
+      this.sc = s; this.isGL = !!s.gl; this.scene = s.gl ? null : s.make(this.ctx);
+      this.c.style.display = this.isGL ? 'none' : ''; if (this.gc) this.gc.style.display = this.isGL ? '' : 'none';
+      this.dyn = 1; this.maxDyn = 1; this.ft = []; this.warm = 50;
+      this.resize();
+    }
+    resize() {
+      const W = window.innerWidth, H = window.innerHeight, q = this.quality || 1, d = Math.min(window.devicePixelRatio || 1, 1.5);
+      if (this.isGL) { const k = d * q * (this.sc.scale || 0.66) * this.dyn; this.gc.width = Math.max(2, Math.round(W * k)); this.gc.height = Math.max(2, Math.round(H * k)); }
+      else { const dpr = d * q; this.c.width = Math.round(W * dpr); this.c.height = Math.round(H * dpr); this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0); this.scene && this.scene.resize(W, H); }
+      this.draw();
+    }
+    draw() {
+      if (this.isGL) {
+        if (this.glr.lost) return;
+        if (!this.glr.render(this.sc, this.gc.width, this.gc.height, this.t, this.P, fxState())) this.use(find(this.sc.fb));
+        return;
+      }
+      try { this.scene && this.scene.frame(this.t, this.P); } catch (e) { console.error(e); }
+    }
     start() { if (!this.running) { this.running = true; this.last = performance.now(); requestAnimationFrame(this._loop); } }
     _loop(now) {
       if (!this.running) return;
-      const dt = Math.min(0.1, (now - this.last) / 1000);
-      if (now - this.last >= 1000 / 40) { // ~40fps cap
-        this.last = now;
-        if (!this.frozen && !this.reduced && !document.hidden) { this.t += dt * this.speed; this.draw(); }
+      const iv = now - this.last, cap = this.isGL ? 1000 / 61 : 1000 / 40; // GPU 60fps, 2D ~40fps
+      if (iv >= cap - 1) {
+        this.last = now; const dt = Math.min(0.1, iv / 1000), f = fxState(), e = f ? f.energy : 0;
+        if (!this.frozen && !this.reduced && !document.hidden) {
+          this.t += dt * this.speed * (1 + e * 1.4); this.draw();
+          if (this.isGL) this.adapt(iv);
+        }
       }
       requestAnimationFrame(this._loop);
     }
-  }
-  function thumb(id, P, w, h) {
-    const c = document.createElement('canvas'); c.width = w; c.height = h; const ctx = c.getContext('2d');
-    const s = (scenes.find(x => x.id === id) || scenes[0]).make(ctx); s.resize(w, h); try { s.frame(6, P); } catch (e) { }
-    return c;
+    // keep the frame rate up: render the GPU scene at a lower resolution on slow devices
+    adapt(iv) {
+      if (this.warm > 0) { this.warm--; return; }
+      this.ft.push(Math.min(iv, 100)); if (this.ft.length < 40) return;
+      const avg = this.ft.reduce((a, b) => a + b, 0) / this.ft.length; this.ft = [];
+      if (avg > 25 && this.dyn > 0.35) { this.maxDyn = Math.max(0.35, this.dyn * 0.95); this.dyn = Math.max(0.35, this.dyn * 0.78); this.resize(); }
+      else if (avg < 18 && this.dyn < this.maxDyn) { this.dyn = Math.min(this.maxDyn, this.dyn * 1.1); this.resize(); }
+    }
   }
 
-  window.SolvoBG = { scenes, PALETTES, Engine, thumb, mix, rgba };
+  window.SolvoBG = { scenes, PALETTES, Engine, thumb, paint, glAvailable, mix, rgba };
 })();
