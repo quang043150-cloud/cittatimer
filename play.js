@@ -38,7 +38,7 @@
         <div class="muted" style="font-size:12.5px">Ends in ${hoursLeft >= 48 ? Math.round(hoursLeft / 24) + ' days' : hoursLeft + ' hours'} · one try per week · average of 5</div>
         ${done ? `<div class="attempt">Your result</div><div class="time" style="font-size:clamp(48px,7vw,90px)">${St.fmt(St.avgOf(ws.res))}</div><div class="muted">best ${St.fmt(St.best(ws.res).v)} · ${ws.res.map(St.fmtSolve).join(' · ')}</div><div class="muted" style="font-size:12px">${ws.submitted ? 'Submitted to the leaderboard.' : A.Cloud.db ? 'Saving to the leaderboard…' : 'Saved in this browser. The shared leaderboard works in the Claude version.'}</div><button class="btn" id="wkCard">Make a share card</button>`
         : !W.scr ? `<div class="empty" style="padding:60px 0">Preparing this week's scrambles…</div>`
-          : `<div class="attempt">Attempt ${i + 1} of 5</div><div class="scramble" style="max-width:620px">${esc(W.scr[i])}</div><div class="time mono" id="wkTime">0.00</div><div class="hint" id="wkHint"></div>
+          : `<div class="attempt">Attempt ${i + 1} of 5</div><div class="scramble" style="max-width:620px">${A.scrHTML(W.scr[i])}</div><div class="time mono" id="wkTime">0.00</div><div class="hint" id="wkHint"></div>
              <div class="muted" style="font-size:12px">${ws.res.length ? 'So far: ' + ws.res.map(St.fmtSolve).join(' · ') : 'Everyone gets these exact cube states this week.'}</div>`}
       </section>
       <section class="card glass"><div class="card-h"><h3>Leaderboard · ${wk}</h3><span class="muted" id="wkLive" style="font-size:12px"></span></div><div id="wkBoard"></div></section></div>`;
@@ -180,9 +180,9 @@
       <section class="glass comp-stage">
         <div class="eyebrow">${g && g.r ? 'Round ' + g.r : 'Lobby'}</div>
         ${g && g.winner ? `<div style="font-family:var(--f-display);font-size:26px;font-weight:700">${A.icon('trophy', 22)} ${esc(winnerName(g.winner))} wins the match</div>` : ''}
-        ${roundOpen ? (B.countdown > 0 && B.myRound === g.r ? `<div class="scramble" style="max-width:620px">${esc(g.scr)}</div><div class="time" style="color:var(--warn)">${B.countdown}</div><div class="hint">Get ready…</div>`
-          : B.me.r === g.r && B.me.st === 'done' ? `<div class="scramble" style="max-width:620px;opacity:.6">${esc(g.scr)}</div><div class="time mono">${B.me.p === -1 ? 'DNF' : St.fmt(B.me.t + (B.me.p || 0))}</div><div class="hint">Waiting for the others…</div>`
-          : B.myRound === g.r ? `<div class="scramble" style="max-width:620px">${esc(g.scr)}</div><div class="time mono" id="btTime">0.00</div><div class="hint" id="btHint"></div>`
+        ${roundOpen ? (B.countdown > 0 && B.myRound === g.r ? `<div class="scramble" style="max-width:620px">${A.scrHTML(g.scr)}</div><div class="time" style="color:var(--warn)">${B.countdown}</div><div class="hint">Get ready…</div>`
+          : B.me.r === g.r && B.me.st === 'done' ? `<div class="scramble" style="max-width:620px;opacity:.6">${A.scrHTML(g.scr)}</div><div class="time mono">${B.me.p === -1 ? 'DNF' : St.fmt(B.me.t + (B.me.p || 0))}</div><div class="hint">Waiting for the others…</div>`
+          : B.myRound === g.r ? `<div class="scramble" style="max-width:620px">${A.scrHTML(g.scr)}</div><div class="time mono" id="btTime">0.00</div><div class="hint" id="btHint"></div>`
           : `<div class="empty">A round is in progress. You join from the next one.</div>`)
         : last && g.done === last.r ? `<div class="attempt">Round ${last.r} result</div><div style="font-family:var(--f-display);font-size:30px;font-weight:700">${last.w ? esc(winnerName(last.w)) + ' wins' : 'No winner'}</div><div class="muted mono">${Object.entries(last.res).map(([k, v]) => `${esc(winnerName(k))} ${v[1] === -1 ? 'DNF' : St.fmt(v[0] + v[1])}`).join(' · ')}</div>`
         : `<div class="empty">${iAmHost ? 'Share the code, then start the first round.' : 'Waiting for the host to start a round.'}</div>`}

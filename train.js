@@ -135,7 +135,7 @@
         <div class="row-actions" style="justify-content:space-between;width:100%"><div class="row-actions"><select class="field" id="crCol" aria-label="Cross colour">${cols.map(x => `<option value="${x.col}" ${!o.neutral && o.col === x.col ? 'selected' : ''}>${x.name} cross</option>`).join('')}<option value="cn" ${o.neutral ? 'selected' : ''}>Colour neutral (all six)</option></select>
           <select class="field" id="crLvl" aria-label="Difficulty"><option value="any">Any scramble</option><option value="4">Easy · 4 moves or fewer</option><option value="5">5 moves</option><option value="6">6 moves</option><option value="78">Hard · 7–8 moves</option></select></div>
           <button class="btn" id="crNew">New scramble (N)</button></div>
-        <div class="scramble" style="margin:14px 0 6px">${esc(cr.scr)}</div>
+        <div class="scramble" style="margin:14px 0 6px">${A.scrHTML(cr.scr)}</div>
         <canvas data-cnet style="width:100%;max-width:340px;height:190px"></canvas>
         <div class="time mono" id="crTime" style="font-size:clamp(56px,7vw,96px)">${cr.phase === 'plan' ? '15' : cr.phase === 'reveal' ? '✓' : '15'}</div>
         <div class="hint">${cr.phase === 'idle' ? 'Press <span class="kbd">Space</span> to start 15 seconds of planning, like WCA inspection.' : cr.phase === 'plan' ? 'Plan your cross. Press <span class="kbd">Space</span> to reveal early.' : 'Press <span class="kbd">Space</span> or <span class="kbd">N</span> for the next scramble.'}</div>

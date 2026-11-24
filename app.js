@@ -16,6 +16,7 @@
     layout: { left: ['times'], right: ['goals', 'averages', 'trend'], under: ['chart', 'last12', 'ladder'] },
     showNet: true, pbFx: true, missions: true, compBg: 'sakura',
     callout: 'beep', metroOn: false, metroTps: 4, ghost: false, ghostSrc: 'pb',
+    timerFont: 'bold', uiSounds: 'pb', haptics: true, colorScr: true, parallax: true, theme: 'amethyst',
     goals: { solves: 50, subT: 10, subN: 10, ao5: 9 }
   };
   const LS_KEY = 'solvo.v1';
@@ -185,12 +186,21 @@
   function applySettings() {
     const s = set(), root = document.documentElement.style;
     root.setProperty('--accent', s.accent); root.setProperty('--accent-ink', lum(s.accent) > 0.55 ? '#160e2e' : '#ffffff');
+    const tf = TIMER_FONTS[s.timerFont] || TIMER_FONTS.bold; root.setProperty('--f-timer', tf.f); root.setProperty('--w-timer', tf.w); root.setProperty('--ls-timer', tf.ls);
     root.setProperty('--blur', s.blur + 'px'); root.setProperty('--glass', `rgba(18,13,34,${s.glassA})`); root.setProperty('--radius', s.radius + 'px');
     if (engine) { engine.P = palette(); engine.speed = s.bgSpeed; const want = App.view === 'comp' ? s.compBg : s.bg; if (engine.quality !== s.quality) { engine.quality = s.quality; engine.id === want && engine.resize(); } if (engine.id !== want) engine.set(want); else engine.draw(); }
     $('#v-timer').classList.toggle('simple', s.mode === 'simple');
     $$('#modeSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === s.mode)));
     $('#selInput').value = s.input;
   }
+
+  const TIMER_FONTS = {
+    bold: { name: 'Bold', f: '"Outfit", "Segoe UI", system-ui, sans-serif', w: 800, ls: '-0.03em' },
+    thin: { name: 'Thin', f: '"Outfit", "Segoe UI", system-ui, sans-serif', w: 200, ls: '-0.02em' },
+    digital: { name: 'Stackmat', f: '"Share Tech Mono", ui-monospace, "SF Mono", monospace', w: 400, ls: '0em' },
+    future: { name: 'Futuristic', f: '"Orbitron", "Segoe UI", system-ui, sans-serif', w: 800, ls: '0em' },
+    mono: { name: 'Mono', f: '"JetBrains Mono", ui-monospace, monospace', w: 700, ls: '-0.05em' },
+  };
 
   // ------------------------------------------------------------------ icons (stroke SVG, one family)
   const ICONS = {
@@ -199,20 +209,39 @@
     download: '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>', compare: '<path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/>', repeat: '<path d="m17 2 4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3"/>',
     trophy: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM17 5h3v1a4 4 0 0 1-3 4M7 5H4v1a4 4 0 0 0 3 4"/>', award: '<circle cx="12" cy="9" r="6"/><path d="m8.5 14-1.5 8 5-3 5 3-1.5-8"/>',
     ghost: '<path d="M9 10h.01M15 10h.01M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z"/>', flame: '<path d="M12 22c4.4 0 7-2.9 7-6.8 0-3.7-2.6-5.9-3.7-8.7-1 1.9-2.2 3-3.8 3.8C11.7 7.4 10.6 5 8.5 3 8.5 8 5 10 5 15.2 5 19.1 7.6 22 12 22z"/>',
-    share: '<path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M16 6l-4-4-4 4M12 2v13"/>'
+    share: '<path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M16 6l-4-4-4 4M12 2v13"/>',
+    timer: '<circle cx="12" cy="13.5" r="7.5"/><path d="M12 10v3.5l2.3 2.3M9.5 2.5h5M12 2.5V6"/>', chart: '<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/>',
+    replay: '<circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z" fill="currentColor"/>', target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/>',
+    spark: '<path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>',
+    users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14.6c2.6.2 4.4 1.9 5 4.9"/>',
+    more: '<circle cx="5" cy="12" r="1.7" fill="currentColor"/><circle cx="12" cy="12" r="1.7" fill="currentColor"/><circle cx="19" cy="12" r="1.7" fill="currentColor"/>',
+    gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/><circle cx="12" cy="12" r="6.5"/>',
+    palette: '<path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.9 1.8-1.9 0-.5-.2-.9-.5-1.3-.3-.3-.5-.8-.5-1.3 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4c0-4.3-4-7.7-9-7.7z"/><circle cx="7.5" cy="11" r="1.2" fill="currentColor"/><circle cx="10" cy="7" r="1.2" fill="currentColor"/><circle cx="15" cy="7" r="1.2" fill="currentColor"/>',
+    layout: '<rect x="3" y="3" width="7" height="18" rx="1.5"/><rect x="14" y="3" width="7" height="10" rx="1.5"/><rect x="14" y="16" width="7" height="5" rx="1.5"/>',
+    copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>',
+    star: '<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>',
+    keyboard: '<rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/>',
+    check: '<path d="M20 6 9 17l-5-5"/>', image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/>',
+    toggle: '<rect x="2" y="6" width="20" height="12" rx="6"/><circle cx="16" cy="12" r="3" fill="currentColor"/>'
   };
   function icon(n, sz) { return `<svg class="ic" width="${sz || 15}" height="${sz || 15}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ''}</svg>`; }
 
   // ------------------------------------------------------------------ toasts / confetti / modal
-  function toast(html, ms) { const el = document.createElement('div'); el.className = 'toast'; el.innerHTML = html; $('#toasts').appendChild(el); setTimeout(() => el.remove(), ms || 2600); }
+  function toast(html, ms) {
+    ms = ms || 2600; const box = $('#toasts'), el = document.createElement('div'); el.className = 'toast'; el.style.setProperty('--dur', ms + 'ms');
+    el.innerHTML = `<div class="toast-in">${html}</div><i class="tbar" aria-hidden="true"></i>`; box.appendChild(el);
+    while (box.children.length > 3) box.firstChild.remove();
+    setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 240); }, ms);
+  }
   function confetti() {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const c = $('#confetti'), ctx = c.getContext('2d'); c.width = innerWidth; c.height = innerHeight;
     const cols = C.COLORS, ps = []; for (let i = 0; i < 160; i++) ps.push({ x: innerWidth / 2, y: innerHeight * 0.45, vx: (Math.random() - 0.5) * 16, vy: -Math.random() * 15 - 4, s: 5 + Math.random() * 6, c: cols[i % 6], r: Math.random() * 6 });
     let f = 0; (function step() { ctx.clearRect(0, 0, c.width, c.height); for (const p of ps) { p.vy += 0.45; p.x += p.vx; p.y += p.vy; p.r += 0.15; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 2, p.s, p.s * 0.6); ctx.restore(); } if (++f < 120) requestAnimationFrame(step); else ctx.clearRect(0, 0, c.width, c.height); })();
   }
-  function modal(html, onMount) {
-    const root = $('#modalRoot'); root.innerHTML = `<div class="modal-bg"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`;
+  function modal(html, onMount, opts) {
+    opts = opts || {};
+    const root = $('#modalRoot'); root.innerHTML = `<div class="modal-bg${opts.sheet ? ' sheet-bg' : ''}"><div class="modal${opts.sheet ? ' sheet' : ''}" role="dialog" aria-modal="true">${opts.sheet ? '<div class="grab" aria-hidden="true"></div>' : ''}${html}</div></div>`;
     const bg = root.firstChild; bg.addEventListener('mousedown', e => { if (e.target === bg) closeModal(); });
     $$('[data-close]', bg).forEach(b => b.onclick = closeModal);
     onMount && onMount(bg.firstChild);
@@ -226,39 +255,74 @@
 
   // ------------------------------------------------------------------ charts (SVG)
   function niceStep(raw) { const mag = Math.pow(10, Math.floor(Math.log10(raw))); for (const k of [1, 2, 2.5, 5, 10]) if (k * mag >= raw) return k * mag; return 10 * mag; }
+  let chartSeq = 0, tipEl = null; const drawnOnce = {};
+  const firstDraw = k => { const f = !drawnOnce[k]; drawnOnce[k] = true; return f; };
+  function tip(html, x, y) {
+    if (!tipEl) { tipEl = document.createElement('div'); tipEl.className = 'ctip'; tipEl.setAttribute('role', 'tooltip'); document.body.appendChild(tipEl); }
+    if (html == null) { tipEl.classList.remove('on'); return; }
+    tipEl.innerHTML = html; tipEl.classList.add('on');
+    const r = tipEl.getBoundingClientRect(); let L = x + 14, T = y - r.height - 12;
+    if (L + r.width > innerWidth - 8) L = x - r.width - 14; if (L < 8) L = 8; if (T < 8) T = y + 18;
+    tipEl.style.left = L + 'px'; tipEl.style.top = T + 'px';
+  }
   function lineChart(el, o) {
     const W = Math.max(220, el.clientWidth || 300), H = o.h || 150, pl = o.pl || 40, pr = 10, pt = 10, pb = o.xLabels ? 20 : 8;
     const all = o.series.flatMap(s => s.d).filter(v => v != null && isFinite(v));
     if (all.length < 2) { el.innerHTML = `<div class="empty">${o.empty || 'Not enough solves yet'}</div>`; return; }
     let lo = Math.min(...all), hi = Math.max(...all); if (o.zero) lo = 0; if (hi - lo < 1e-6) { hi += 1; lo -= 1; } const pad = (hi - lo) * 0.08; hi += pad; if (!o.zero) lo -= pad;
     const n = Math.max(...o.series.map(s => s.d.length)); const x = i => pl + (n <= 1 ? 0 : i * (W - pl - pr) / (n - 1)); const y = v => pt + (hi - v) * (H - pt - pb) / (hi - lo);
-    const step = niceStep((hi - lo) / 4); let g = '';
+    const id = 'c' + (++chartSeq), anim = (o.anim != null ? o.anim : !el.dataset.drawn) && !C.reducedMotion(); el.dataset.drawn = '1';
+    const step = niceStep((hi - lo) / 4); let g = '', defs = '';
     for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) g += `<line x1="${pl}" x2="${W - pr}" y1="${y(v)}" y2="${y(v)}" stroke="rgba(255,255,255,0.07)"/><text x="${pl - 6}" y="${y(v) + 3}" text-anchor="end">${(o.yfmt || (a => a))(v)}</text>`;
     if (o.xLabels) for (const [i, lab] of o.xLabels) g += `<text x="${clamp(x(i), pl + 14, W - pr - 14)}" y="${H - 5}" text-anchor="middle">${esc(lab)}</text>`;
     let paths = '';
-    for (const s of o.series) {
+    o.series.forEach((s, si) => {
       let d = '', pen = false, first = null, lastI = null;
       s.d.forEach((v, i) => { if (v == null || !isFinite(v)) { pen = false; return; } d += (pen ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1); pen = true; if (first === null) first = i; lastI = i; });
-      if (s.area && first !== null) paths += `<path d="${d}L${x(lastI)} ${H - pb}L${x(first)} ${H - pb}Z" fill="${s.c}" opacity="0.12"/>`;
-      paths += `<path d="${d}" fill="none" stroke="${s.c}" stroke-width="${s.w || 1.6}" ${s.dash ? `stroke-dasharray="${s.dash}"` : ''} stroke-linejoin="round" stroke-linecap="round"/>`;
+      if (s.area && first !== null) { defs += `<linearGradient id="${id}g${si}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s.c}" stop-opacity="0.32"/><stop offset="1" stop-color="${s.c}" stop-opacity="0"/></linearGradient>`; paths += `<path class="${anim ? 'fadein' : ''}" d="${d}L${x(lastI)} ${H - pb}L${x(first)} ${H - pb}Z" fill="url(#${id}g${si})"/>`; }
+      paths += `<path class="ln${anim && !s.dash ? ' draw' : ''}" ${!s.dash ? 'pathLength="1"' : ''} d="${d}" fill="none" stroke="${s.c}" stroke-width="${s.w || 1.6}" ${s.dash ? `stroke-dasharray="${s.dash}"` : ''} stroke-linejoin="round" stroke-linecap="round"/>`;
       if (s.dots) s.d.forEach((v, i) => { if (v != null && isFinite(v)) paths += `<circle cx="${x(i)}" cy="${y(v)}" r="2" fill="${s.c}"/>`; });
-      if (s.end && lastI !== null) paths += `<circle cx="${x(lastI)}" cy="${y(s.d[lastI])}" r="3.5" fill="${s.c}" stroke="#0d0a18" stroke-width="1.5"/>`;
-    }
+      if (s.end && lastI !== null) paths += `<circle class="enddot" cx="${x(lastI)}" cy="${y(s.d[lastI])}" r="3.5" fill="${s.c}" stroke="#0d0a18" stroke-width="1.5"/>`;
+    });
     if (o.marks) for (const m of o.marks) paths += `<circle cx="${x(m.i)}" cy="${y(m.v)}" r="4" fill="none" stroke="${m.c}" stroke-width="1.5"/><text x="${x(m.i)}" y="${y(m.v) - 8}" text-anchor="middle" style="fill:${m.c}">${esc(m.label)}</text>`;
-    el.innerHTML = `<svg class="chart" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${g}${paths}</svg>`;
+    const xh = `<g class="xh" style="display:none"><line y1="${pt}" y2="${H - pb}" stroke="rgba(255,255,255,0.35)" stroke-dasharray="3 3"/>${o.series.map(s => `<circle r="4" fill="${s.c}" stroke="#0d0a18" stroke-width="2"/>`).join('')}</g>`;
+    el.innerHTML = `<svg class="chart${o.onPick ? ' pickable' : ''}" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><defs>${defs}</defs>${g}${paths}${xh}<rect class="hit" x="${pl}" y="0" width="${W - pl - pr}" height="${H}" fill="transparent"/></svg>`;
+    if (o.tip === false) return;
+    const svg = el.firstChild, gx = svg.querySelector('.xh'), ln = gx.querySelector('line'), dots = [...gx.querySelectorAll('circle')];
+    const idx = e => { const r = svg.getBoundingClientRect(), px = (e.clientX - r.left) * (W / r.width); return clamp(Math.round((px - pl) / ((W - pl - pr) / Math.max(1, n - 1))), 0, n - 1); };
+    const fmtV = o.fmt || (v => St.fmt(v));
+    svg.addEventListener('pointermove', e => {
+      const i = idx(e), X = x(i); gx.style.display = ''; ln.setAttribute('x1', X); ln.setAttribute('x2', X);
+      o.series.forEach((s, k) => { const v = s.d[i]; if (v == null || !isFinite(v)) dots[k].style.display = 'none'; else { dots[k].style.display = ''; dots[k].setAttribute('cx', X); dots[k].setAttribute('cy', y(v)); } });
+      const html = o.tip ? o.tip(i) : o.series.filter(s => s.d[i] != null).map(s => `<div><i style="background:${s.c}"></i>${esc(s.label || '')} <b>${fmtV(s.d[i])}</b></div>`).join('');
+      if (html) tip(html, e.clientX, e.clientY); else tip(null);
+    });
+    svg.addEventListener('pointerleave', () => { gx.style.display = 'none'; tip(null); });
+    if (o.onPick) svg.addEventListener('click', e => { tip(null); o.onPick(idx(e)); });
   }
   function barChart(el, vals, o) {
     o = o || {}; const W = Math.max(200, el.clientWidth || 300), H = o.h || 120, pb = o.labels ? 18 : 4, pt = o.top ? 14 : 4;
     const mx = Math.max(1e-9, ...vals.filter(v => isFinite(v))); const n = vals.length; const bw = (W - 4) / n;
-    let s = '';
+    const anim = (o.anim != null ? o.anim : !el.dataset.drawn) && !C.reducedMotion(); el.dataset.drawn = '1';
+    let s = '', hits = '';
     vals.forEach((v, i) => {
       const hh = isFinite(v) ? (v / mx) * (H - pb - pt) : (H - pb - pt); const xx = 2 + i * bw + bw * 0.12, yy = H - pb - hh;
       const col = o.color ? o.color(v, i) : 'var(--accent)';
-      s += `<rect x="${xx.toFixed(1)}" y="${yy.toFixed(1)}" width="${(bw * 0.76).toFixed(1)}" height="${Math.max(1, hh).toFixed(1)}" rx="2" style="fill:${col}" ${isFinite(v) ? '' : 'opacity="0.35"'}/>`;
+      s += `<rect class="cbar${anim ? ' grow' : ''}" data-i="${i}" x="${xx.toFixed(1)}" y="${yy.toFixed(1)}" width="${(bw * 0.76).toFixed(1)}" height="${Math.max(1, hh).toFixed(1)}" rx="${Math.min(4, bw * 0.2).toFixed(1)}" style="fill:${col};${anim ? `animation-delay:${Math.min(400, i * 18)}ms` : ''}" ${isFinite(v) ? '' : 'opacity="0.35"'}/>`;
       if (o.top) s += `<text x="${xx + bw * 0.38}" y="${yy - 3}" text-anchor="middle">${esc(o.top(v, i))}</text>`;
       if (o.labels && o.labels[i] !== undefined && o.labels[i] !== '') s += `<text x="${xx + bw * 0.38}" y="${H - 5}" text-anchor="middle">${esc(o.labels[i])}</text>`;
+      hits += `<rect class="bhit" data-i="${i}" x="${(2 + i * bw).toFixed(1)}" y="0" width="${bw.toFixed(1)}" height="${H}" fill="transparent"/>`;
     });
-    el.innerHTML = `<svg class="chart" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${s}</svg>`;
+    el.innerHTML = `<svg class="chart${o.onPick ? ' pickable' : ''}" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${s}${o.tip === false ? '' : hits}</svg>`;
+    if (o.tip === false) return;
+    const svg = el.firstChild, bars = [...svg.querySelectorAll('rect.cbar')];
+    svg.addEventListener('pointermove', e => {
+      const h = e.target.closest('[data-i]'); if (!h) return; const i = +h.dataset.i;
+      bars.forEach((b, k) => b.classList.toggle('hl', k === i));
+      const html = o.tip ? o.tip(vals[i], i) : (isFinite(vals[i]) ? `<b>${St.fmt(vals[i])}</b>` : 'DNF'); tip(html, e.clientX, e.clientY);
+    });
+    svg.addEventListener('pointerleave', () => { bars.forEach(b => b.classList.remove('hl')); tip(null); });
+    if (o.onPick) svg.addEventListener('click', e => { const h = e.target.closest('[data-i]'); if (h) { tip(null); o.onPick(+h.dataset.i); } });
   }
   const secFmt = v => (v / 1000).toFixed(v < 10000 ? 1 : 0);
 
@@ -268,6 +332,46 @@
   function on(n, f) { (bus[n] = bus[n] || []).push(f); }
   function emit(n, ...a) { (bus[n] || []).forEach(f => { try { f(...a); } catch (e) { console.error(e); } }); }
   function beep(freq, dur) { try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); const o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = freq; o.type = 'sine'; g.gain.setValueAtTime(0.0001, actx.currentTime); g.gain.exponentialRampToValueAtTime(0.25, actx.currentTime + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + dur); o.connect(g).connect(actx.destination); o.start(); o.stop(actx.currentTime + dur + 0.02); } catch (e) { } }
+
+  function tone(f, t0, dur, type, vol) { const o = actx.createOscillator(), g = actx.createGain(); o.type = type || 'sine'; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol || 0.1, t0 + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur); o.connect(g).connect(actx.destination); o.start(t0); o.stop(t0 + dur + 0.03); }
+  function sfx(kind) {
+    const mode = set().uiSounds || 'pb'; if (mode === 'off') return; if (mode !== 'all' && kind !== 'pb' && kind !== 'badge') return;
+    try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume(); const t = actx.currentTime + 0.01;
+      if (kind === 'start') tone(620, t, 0.06, 'sine', 0.07);
+      else if (kind === 'stop') { tone(880, t, 0.06, 'sine', 0.07); tone(1320, t + 0.06, 0.08, 'sine', 0.06); }
+      else if (kind === 'pb') [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, t + i * 0.085, 0.28, 'triangle', 0.11));
+      else if (kind === 'badge') [880, 1174.66, 1567.98].forEach((f, i) => tone(f, t + i * 0.07, 0.2, 'sine', 0.08));
+    } catch (e) { }
+  }
+  function haptic(p) { if (!set().haptics || !navigator.vibrate || !matchMedia('(pointer: coarse)').matches) return; try { navigator.vibrate(p); } catch (e) { } }
+  // pill-shaped ring around the main time: fills while holding, drains during inspection, flashes on stop
+  const Ring = {
+    el: null, pr: null, len: -1, t: 0,
+    ok() { if (!this.el) { this.el = $('#tring'); this.pr = $('#trProg'); } return !!(this.el && Timer.ctx && Timer.ctx.name === 'main'); },
+    fit() {
+      const r = this.el.getBoundingClientRect(); if (!r.width || !r.height) return;
+      const w = r.width, h = r.height, sw = 4, rw = w - sw, rh = h - sw, rx = Math.min(rw, rh) / 2;
+      this.el.setAttribute('viewBox', `0 0 ${w.toFixed(1)} ${h.toFixed(1)}`);
+      this.el.querySelectorAll('rect').forEach(rc => { rc.setAttribute('x', sw / 2); rc.setAttribute('y', sw / 2); rc.setAttribute('width', rw.toFixed(1)); rc.setAttribute('height', rh.toFixed(1)); rc.setAttribute('rx', rx.toFixed(1)); rc.setAttribute('ry', rx.toFixed(1)); });
+      const per = 2 * (rw - 2 * rx) + 2 * (rh - 2 * rx) + 2 * Math.PI * rx; this.pr.style.strokeDashoffset = (-((rw - 2 * rx) / 2) / per * 100).toFixed(2);
+    },
+    set(mode, frac, ms) {
+      if (!this.ok()) return; const el = this.el, pr = this.pr; clearTimeout(this.t);
+      el.classList.remove('hold', 'ready', 'insp', 'warn', 'late', 'flash', 'pb');
+      if (mode === 'off') { el.classList.remove('on'); pr.style.transition = 'none'; this.len = -1; return; }
+      this.fit(); el.classList.add('on', mode); pr.style.transition = 'none';
+      if (mode === 'hold') { pr.style.strokeDasharray = '0 100'; void pr.getBoundingClientRect(); pr.style.transition = `stroke-dasharray ${ms}ms linear`; pr.style.strokeDasharray = '100 100'; }
+      else if (mode === 'insp') pr.style.strokeDasharray = `${(frac * 100).toFixed(2)} 100`;
+      else { pr.style.strokeDasharray = '100 100'; if (mode === 'flash' || mode === 'pb') this.t = setTimeout(() => this.set('off'), mode === 'pb' ? 1700 : 650); }
+    },
+    insp(e, text) {
+      if (!this.ok()) return;
+      if (!this.el.classList.contains('insp') || text.length !== this.len) { this.len = text.length; this.set('insp', 1); }
+      this.el.classList.toggle('warn', e >= 8 && e < 12); this.el.classList.toggle('late', e >= 12);
+      this.pr.style.strokeDasharray = `${((e > 15 ? 1 : Math.max(0, 1 - e / 15)) * 100).toFixed(2)} 100`;
+    },
+    idle() { if (this.el && /\b(hold|ready|insp)\b/.test(this.el.getAttribute('class'))) this.set('off'); }
+  };
 
   // ------------------------------------------------------------------ timer engine
   // ctx: { el, hint, inspection, onDone(t, pen, extra), virtual }
@@ -296,7 +400,7 @@
       else if (st === 'inspHold') { clearTimeout(this.holdTO); this.state = 'inspect'; }
       this.show();
     },
-    armHold(next) { clearTimeout(this.holdTO); this.holdTO = setTimeout(() => { if (this.state === 'hold' || this.state === 'inspHold') { this.state = next; this.show(); } }, set().holdMs); },
+    armHold(next) { clearTimeout(this.holdTO); this.holdTO = setTimeout(() => { if (this.state === 'hold' || this.state === 'inspHold') { this.state = next; this.show(); emit('ready'); } }, set().holdMs); },
     startInspection() {
       this.state = 'inspect'; this.i0 = performance.now(); this.beeped = {}; document.body.classList.add('solving');
       if (this.ctx.onInspect) this.ctx.onInspect();
@@ -318,6 +422,7 @@
       try { wakeLock && wakeLock.release(); } catch (e) { } wakeLock = null;
       this.lastT = t; this.el().innerHTML = fmtBig(this.pen === -1 ? null : t + (this.pen || 0), this.pen);
       emit('stop', t, this.pen, this.ctx.name || 'main');
+      if (this.ctx.name === 'main') Ring.set('flash');
       this.ctx.onDone(t, this.pen);
       this.show(true);
     },
@@ -336,7 +441,7 @@
           const e = (performance.now() - this.i0) / 1000; const el = this.el();
           for (const sec of [8, 12, 15, 17]) if (e >= sec && !this.beeped[sec]) { this.beeped[sec] = 1; if (App.callout) App.callout(sec); else if (sec === 8) beep(880, 0.12); }
           el.textContent = e > 17 ? 'DNF' : e > 15 ? '+2' : String(Math.max(1, 15 - Math.floor(e)));
-          el.classList.toggle('late', e > 12);
+          el.classList.toggle('late', e > 12); Ring.insp(e, el.textContent);
         } else return;
         this.raf = requestAnimationFrame(tick);
       };
@@ -351,6 +456,7 @@
       if (st === 'inspect' || st === 'inspHold' || st === 'inspReady') el.classList.add('insp');
       if (st === 'hold' || st === 'ready' || st === 'armInsp') { if (!keepTime) el.innerHTML = fmtBig(0, 0); }
       if (st === 'armInsp') { el.textContent = '15'; el.classList.add('insp'); }
+      if (st === 'hold') Ring.set('hold', 0, set().holdMs); else if (st === 'ready') Ring.set('ready'); else if (st === 'armInsp') Ring.set('insp', 1); else if (st === 'running') Ring.set('off'); else if (st === 'idle') Ring.idle();
       if (this.ctx.hint) this.ctx.hint(st);
     }
   };
@@ -368,9 +474,19 @@
   function prevScramble() { if (Scr.idx > 0) { Scr.idx--; onScramble(); } }
   function nextScramble() { if (Scr.idx < Scr.hist.length - 1) { Scr.idx++; onScramble(); } else newScramble(); }
   function onScramble() {
-    const el = $('#scramble'); el.textContent = curScramble(); el.classList.toggle('big', event() === '444' || event() === '555');
+    const el = $('#scramble'); el.innerHTML = scrHTML(curScramble(), true); el.classList.toggle('big', event() === '444' || event() === '555'); App.ui.scrPrev = null;
     if (set().input === 'virtual') VC.load();
     drawNets(); emit('scramble', curScramble());
+  }
+  function scrHTML(scr, interactive) {
+    const col = set().colorScr !== false;
+    return C.tokenize(scr).map((m, i) => { const f = /^[URFDLB]/i.test(m) ? m[0].toUpperCase() : 'X'; return `<span class="mv${col ? ' f-' + f : ''}"${interactive ? ` data-i="${i}"` : ''}>${esc(m)}</span>`; }).join(' ');
+  }
+  function previewScramble(i) {
+    const N = C.EVENT_N[event()]; if (!N) return; App.ui.scrPrev = i;
+    const mv = C.tokenize(curScramble()), cube = new C.Cube(N).apply(i == null ? curScramble() : mv.slice(0, i + 1).join(' '));
+    $$('canvas[data-net]').forEach(c => C.drawNet(c, cube)); const mini = $('#netMini'); if (mini && !mini.hidden) C.drawNet(mini, cube);
+    $$('#scramble .mv').forEach((sp, k) => { sp.classList.toggle('past', i != null && k < i); sp.classList.toggle('cur', i != null && k === i); sp.classList.toggle('fut', i != null && k > i); });
   }
   function replaceScrambleIfIdle() {
     if (App.view !== 'timer' || Timer.state !== 'idle' || !App.nextScramble) return;
@@ -387,18 +503,21 @@
 
   // ------------------------------------------------------------------ virtual cube
   const VC = {
-    cube: null, view: { yaw: -0.62, pitch: 0.52 }, moves: [], live: false,
-    load() { this.cube = new C.Cube(3).apply(curScramble()); this.moves = []; this.live = false; this.draw(); },
-    draw() { const c = $('#vcCanvas'); if (c && this.cube && !$('#vcube').hidden) C.draw3D(c, this.cube, this.view); },
+    cube: null, view: { yaw: -0.62, pitch: 0.52 }, moves: [], live: false, anim: null,
+    ensure() { if (!this.anim) this.anim = new C.Animator(() => $('#vcCanvas'), this.view, 115); return this.anim; },
+    setCube(c) { this.cube = c; this.ensure().reset(c); },
+    load() { this.moves = []; this.live = false; this.setCube(new C.Cube(3).apply(curScramble())); },
+    draw() { const a = this.ensure(); if (!this.cube || $('#vcube').hidden) return; if (!a.cube) a.reset(this.cube); else if (a.idle()) a.draw(); },
+    show(m) { const a = this.ensure(); if (!a.cube) a.reset(this.cube); else a.push(m); },
     turn(m) {
       if (!this.cube) this.load();
       const rot = /^[xyz]/.test(m);
-      if (Timer.state === 'running') { const el = Math.round(performance.now() - Timer.t0); this.cube.move(m); this.moves.push([m, el]); this.draw(); emit('vmove', m, el, this.cube); if (this.cube.isSolved()) Timer.stop(); return; }
-      if (rot) { this.cube.move(m); this.moves.push([m, 0]); this.draw(); return; }
+      if (Timer.state === 'running') { const el = Math.round(performance.now() - Timer.t0); this.cube.move(m); this.moves.push([m, el]); this.show(m); emit('vmove', m, el, this.cube); if (this.cube.isSolved()) Timer.stop(); return; }
+      if (rot) { this.cube.move(m); this.moves.push([m, 0]); this.show(m); return; }
       if (Timer.state === 'idle' || Timer.state === 'inspect' || Timer.state === 'inspHold' || Timer.state === 'inspReady' || Timer.state === 'armInsp') {
         if (Timer.state === 'armInsp') Timer.state = 'idle';
         Timer.state = Timer.state === 'idle' ? 'ready' : 'inspReady'; Timer.startRun();
-        this.cube.move(m); this.moves.push([m, 0]); this.draw(); emit('vmove', m, 0, this.cube); Timer.show();
+        this.cube.move(m); this.moves.push([m, 0]); this.show(m); emit('vmove', m, 0, this.cube); Timer.show();
       }
     }
   };
@@ -426,7 +545,7 @@
       const v = St.val(s); let msg = null;
       if (before.single !== null && v < before.single) msg = `New PB single <b>${St.fmt(v)}</b>`;
       else { const a5 = St.aoN(list, 5); if (before.ao5 !== null && a5 !== null && a5 < before.ao5) msg = `New PB ao5 <b>${St.fmt(a5)}</b>`; else { const a12 = St.aoN(list, 12); if (before.ao12 !== null && a12 !== null && a12 < before.ao12) msg = `New PB ao12 <b>${St.fmt(a12)}</b>`; } }
-      if (msg) { toast(icon('trophy') + ' ' + msg, 3500); confetti(); }
+      if (msg) { toast(icon('trophy') + ' ' + msg, 3500); confetti(); emit('pb', msg); }
     }
     App.coachCheck && App.coachCheck();
     emit('solve', s);
@@ -475,8 +594,20 @@
     $('#time').hidden = false;
     if (Timer.state === 'idle') { const last = list[list.length - 1]; $('#time').innerHTML = last ? fmtBig(last.p === -1 ? null : last.t + (last.p || 0), last.p) : fmtBig(0, 0); }
     // chips + penalty buttons
-    const last = list[list.length - 1];
-    $('#chips').innerHTML = [['ao5', St.aoN(list, 5)], ['ao12', St.aoN(list, 12)], ['best', St.best(list).v], ['mean', St.mean(list)]].map(([k, v]) => `<div class="chip glass"><div class="k">${k}</div><div class="v">${St.fmt(v)}</div></div>`).join('') +
+    const last = list[list.length - 1], prevChips = App.ui.chips || {}, sameSet = App.ui.chipSid === S.cur, chipVals = {};
+    const chipHTML = [['ao5', St.aoN(list, 5)], ['ao12', St.aoN(list, 12)], ['best', St.best(list).v], ['mean', St.mean(list)]].map(([k, v]) => {
+      chipVals[k] = v; const pv = prevChips[k]; let cls = '';
+      if (sameSet && pv != null && v != null && isFinite(pv) && isFinite(v) && Math.abs(pv - v) > 0.5) cls = v < pv ? ' up' : ' down';
+      return `<div class="chip glass${cls}"><div class="k">${k}</div><div class="v">${St.fmt(v)}</div></div>`;
+    }).join('');
+    App.ui.chips = chipVals; App.ui.chipSid = S.cur;
+    const dEl = $('#delta');
+    if (dEl) {
+      const prev = list.slice(0, -1), ref = St.aoN(prev, 12), refM = ref == null || !isFinite(ref) ? St.mean(prev) : ref, lv = last ? St.val(last) : null;
+      if (last && prev.length >= 3 && refM && isFinite(lv) && Timer.state === 'idle') { const d = lv - refM; dEl.className = 'delta ' + (d <= 0 ? 'good' : 'bad'); dEl.textContent = `${d <= 0 ? '−' : '+'}${St.fmt(Math.abs(d))} vs ${ref == null || !isFinite(ref) ? 'mean' : 'ao12'}`; dEl.hidden = false; }
+      else dEl.hidden = true;
+    }
+    $('#chips').innerHTML = chipHTML +
       (last ? `<div class="pen glass" role="group" aria-label="Last solve"><button data-pen="0" class="${!last.p ? 'on' : ''}" title="OK">OK</button><button data-pen="2000" class="${last.p === 2000 ? 'on' : ''}" title="+2 (Alt+2)">+2</button><button data-pen="-1" class="${last.p === -1 ? 'on' : ''}" title="DNF (Alt+D)">DNF</button><button data-del title="Delete (Alt+Z)" aria-label="Delete last solve">${icon('x', 14)}</button></div>` : '') + (list.length ? `<button class="btn sm" id="shareBtn" title="Make a share card">${icon('share', 13)} Share</button>` : '');
     const sb = $('#shareBtn'); if (sb) sb.onclick = () => App.openShareCard && App.openShareCard();
     const pen = $('#chips .pen');
@@ -496,7 +627,7 @@
     times(el) {
       const list = solves(), n = list.length, r5 = St.rolling(list, 5), r12 = St.rolling(list, 12), b = St.best(list).at;
       const rows = []; for (let i = n - 1; i >= Math.max(0, n - 200); i--) { const s = list[i]; rows.push(`<tr class="click" data-i="${i}"><td>${i + 1}</td><td class="b ${i === b ? 'pb' : ''}">${St.fmtSolve(s)}${s.r ? ' <span title="Has replay" style="color:var(--accent)">' + icon('play', 10) + '</span>' : ''}</td><td>${St.fmt(r5[i])}</td><td>${St.fmt(r12[i])}</td></tr>`); }
-      el.innerHTML = `<div class="card-h"><h3>Recent times</h3><span class="muted mono" style="font-size:12px">${n}</span></div>` + (n ? `<div class="times-scroll"><table class="tbl"><thead><tr><th>#</th><th>Time</th><th>ao5</th><th>ao12</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>` : `<div class="empty">Your solves appear here.</div>`);
+      el.innerHTML = `<div class="card-h"><h3>Recent times</h3><span class="muted mono" style="font-size:12px">${n}</span></div>` + (n ? `<div class="times-scroll"><table class="tbl"><thead><tr><th>#</th><th>Time</th><th>ao5</th><th>ao12</th></tr></thead><tbody>${rows.join('')}</tbody></table></div>` : `<div class="empty-state">${icon('timer', 28)}<b>No solves yet</b><span>Press Space or tap the time to start your first solve.</span></div>`);
       el.onclick = e => { const tr = e.target.closest('tr[data-i]'); if (tr) openSolve(list[+tr.dataset.i]); };
     },
     goals(el) {
@@ -515,19 +646,22 @@
     trend(el) {
       const list = solves(), last = list.slice(-12), a6 = list.length >= 6 ? St.mean(list.slice(-6)) : null, p6 = list.length >= 12 ? St.mean(list.slice(-12, -6)) : null;
       el.innerHTML = `<div class="card-h"><h3>Solve trend · last 12</h3></div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><div><div class="muted">Last 6 average</div><b class="mono">${a6 ? St.fmt(a6) + ' s' : '–'}</b></div><div style="text-align:right"><div class="muted">vs previous 6</div><b class="mono" style="color:${a6 && p6 ? (a6 < p6 ? 'var(--good)' : 'var(--bad)') : 'inherit'}">${a6 && p6 ? (a6 < p6 ? '−' : '+') + St.fmt(Math.abs(a6 - p6)) + ' s' : '–'}</b></div></div><div class="tb"></div><div class="legend" style="justify-content:space-between"><span>Oldest → newest</span><span>Taller = slower</span></div>`;
-      requestAnimationFrame(() => barChart($('.tb', el), last.map(St.val), { h: 70, color: (v, i) => i === last.length - 1 ? '#ffffff' : 'var(--accent)' }));
+      requestAnimationFrame(() => barChart($('.tb', el), last.map(St.val), { h: 70, anim: firstDraw('w-trend'), color: (v, i) => i === last.length - 1 ? '#ffffff' : 'var(--accent)', tip: (v, i) => `<b>${St.fmtSolve(last[i])}</b>`, onPick: i => openSolve(last[i]) }));
     },
     chart(el) {
       const list = solves(); const key = 'chartN'; const N = App.ui[key] || 50; const win = N === 'all' ? list : list.slice(-N); const off = list.length - win.length;
       el.innerHTML = `<div class="card-h"><h3>Solve times</h3><div class="seg" style="padding:2px">${[50, 100, 500, 'all'].map(n => `<button class="${n === N ? 'on' : ''}" data-n="${n}" style="padding:2px 8px;font-size:12px">${n === 'all' ? 'All' : n}</button>`).join('')}</div></div><div class="cv"></div><div class="legend"><span><i style="background:#c4b5fd"></i>Solve</span><span><i style="background:#5eead4"></i>ao5</span><span><i style="background:#fbbf24"></i>ao12</span></div><div class="stat-grid" style="margin-top:8px;grid-template-columns:repeat(4,1fr)">${[['Best', St.best(win).v], ['Average', St.mean(win)], ['Worst', St.worst(win)]].map(([k, v]) => `<div><div class="eyebrow">${k}</div><b class="mono">${St.fmt(v)}</b></div>`).join('')}<div><div class="eyebrow">Trend (10 vs 10)</div><b class="mono">${(() => { if (list.length < 20) return '–'; const d = St.mean(list.slice(-10)) - St.mean(list.slice(-20, -10)); return (d < 0 ? '▼ faster ' : '▲ slower ') + St.fmt(Math.abs(d)); })()}</b></div></div>`;
       $$('[data-n]', el).forEach(b => b.onclick = () => { App.ui[key] = b.dataset.n === 'all' ? 'all' : +b.dataset.n; W.chart(el); });
       const r5 = St.rolling(list, 5).slice(off), r12 = St.rolling(list, 12).slice(off);
-      requestAnimationFrame(() => lineChart($('.cv', el), { h: 130, yfmt: secFmt, series: [{ d: win.map(St.val), c: '#c4b5fd', w: 1.2, dots: win.length <= 60 }, { d: r5, c: '#5eead4', w: 1.6 }, { d: r12, c: '#fbbf24', w: 1.6, end: true }] }));
+      requestAnimationFrame(() => lineChart($('.cv', el), { h: 130, yfmt: secFmt, anim: firstDraw('w-chart'), series: [{ d: win.map(St.val), c: '#c4b5fd', w: 1.2, dots: win.length <= 60, label: 'solve' }, { d: r5, c: '#5eead4', w: 1.6, label: 'ao5' }, { d: r12, c: '#fbbf24', w: 1.6, end: true, label: 'ao12' }],
+        tip: i => { const sv = win[i]; if (!sv) return ''; return `<div class="muted">#${off + i + 1} · ${new Date(sv.d).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</div><div><i style="background:#c4b5fd"></i>solve <b>${St.fmtSolve(sv)}</b></div>` + (r5[i] != null ? `<div><i style="background:#5eead4"></i>ao5 <b>${St.fmt(r5[i])}</b></div>` : '') + (r12[i] != null ? `<div><i style="background:#fbbf24"></i>ao12 <b>${St.fmt(r12[i])}</b></div>` : '') + '<div class="muted tip-hint">Click to open</div>'; },
+        onPick: i => win[i] && openSolve(win[i]) }));
     },
     last12(el) {
       const list = solves(), last = list.slice(-12), m = last.length ? St.meanOf(last) : null, prev = list.length >= 24 ? St.meanOf(list.slice(-24, -12)) : null;
       el.innerHTML = `<div class="card-h"><h3>Last 12 solves · time per solve</h3></div><div class="cv"></div><div class="legend" style="justify-content:space-between"><span>Mean of 12 <b class="mono" style="color:var(--ink)">${St.fmt(m)}</b></span><span>vs previous 12 ${prev && m && isFinite(m) && isFinite(prev) ? `<b class="mono" style="color:${m < prev ? 'var(--good)' : 'var(--bad)'}">${m < prev ? '▼' : '▲'} ${St.fmt(Math.abs(m - prev))}</b>` : '–'}</span></div>`;
-      requestAnimationFrame(() => barChart($('.cv', el), last.map(St.val), { h: 110, top: v => isFinite(v) ? (v / 1000).toFixed(1) : 'DNF', color: (v, i) => `color-mix(in srgb, var(--accent) ${55 + i * 4}%, #ffffff)` }));
+      requestAnimationFrame(() => barChart($('.cv', el), last.map(St.val), { h: 110, anim: firstDraw('w-last12'), top: v => isFinite(v) ? (v / 1000).toFixed(1) : 'DNF', color: (v, i) => `color-mix(in srgb, var(--accent) ${55 + i * 4}%, #ffffff)`,
+        tip: (v, i) => `<div class="muted">Solve #${list.length - last.length + i + 1}</div><b>${St.fmtSolve(last[i])}</b><div class="muted tip-hint">Click to open</div>`, onPick: i => openSolve(last[i]) }));
     },
     ladder(el) {
       const list = solves(); const b = St.best(list).v || 10000; const top = Math.max(7, Math.floor(b / 1000)); const cuts = []; for (let k = 0; k < 6; k++) cuts.push(top + k * 2);
@@ -607,6 +741,7 @@
   function bindKeys() {
     window.addEventListener('keydown', e => {
       if (modalOpen()) { if (e.key === 'Escape') closeModal(); return; }
+      if (!inputTarget(e) && e.key === '?' && Timer.state === 'idle') { e.preventDefault(); openShortcuts(); return; }
       if (inputTarget(e) || !timingView()) return;
       if (App.view === 'comp' && App.compKey && App.compKey(e)) return;
       if (App.keyHooks && App.keyHooks[App.view] && App.keyHooks[App.view](e)) return;
@@ -649,7 +784,11 @@
     if (Timer.state !== 'idle') Timer.cancel();
     App.view = v; App.sub = sub;
     $$('.view').forEach(el => el.hidden = el.dataset.v !== v);
+    const cur = $(`.view[data-v="${v}"]`); if (cur) { cur.classList.remove('enter'); void cur.offsetWidth; cur.classList.add('enter'); }
     $$('#tabs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
+    $$('#botnav [data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
+    const mb = $('#botnav [data-more]'); if (mb) mb.setAttribute('aria-pressed', String(['replay', 'comp', 'play', 'options'].includes(v)));
+    tip(null);
     const want = v === 'comp' ? set().compBg : set().bg; if (engine && engine.id !== want) engine.set(want);
     if (v === 'timer') { Timer.setCtx(timerCtx()); renderSolve(); }
     else if (App.render[v]) App.render[v](sub);
@@ -670,6 +809,48 @@
     if (App.view !== 'timer') go('timer'); else { renderSolve(); Timer.show(); }
   }
 
+  const SHORTCUTS = [['Space', 'Start inspection · hold, release to start · stop'], ['Any key', 'Stop the timer'], ['Esc', 'Cancel inspection'], ['Alt + Z', 'Delete the last solve'], ['Alt + 2', 'Toggle +2 on the last solve'], ['Alt + D', 'Toggle DNF on the last solve'], ['Alt + N', 'New scramble'], ['?', 'Show this list'], ['F (Train)', 'Mark the last OLL/PLL case as failed'], ['Space / N (Cross trainer)', 'Plan, reveal, next scramble'], ['Tap the time area', 'Start and stop on a phone or tablet']];
+  function openShortcuts() {
+    modal(`<div class="modal-h"><h3>Keyboard shortcuts</h3><button class="iconbtn" data-close aria-label="Close">${icon('x')}</button></div>` + SHORTCUTS.map(([k, v]) => `<div class="row"><span class="kbd">${esc(k)}</span><span class="muted">${esc(v)}</span></div>`).join(''));
+  }
+  function openMore() {
+    const items = [['replay', 'replay', 'Replay'], ['comp', 'trophy', 'Comp'], ['play', 'users', 'Play'], ['themes', 'palette', 'Themes'], ['backgrounds', 'star', 'Backgrounds'], ['arrange', 'layout', 'Arrange'], ['mode', 'toggle', set().mode === 'simple' ? 'Full view' : 'Simple view'], ['options', 'gear', 'Settings']];
+    modal(`<div class="more-grid">${items.map(([k, ic, l]) => `<button class="more-item" data-k="${k}">${icon(ic, 22)}<span>${l}</span></button>`).join('')}</div>`, m => {
+      m.onclick = e => {
+        const b = e.target.closest('[data-k]'); if (!b) return; const k = b.dataset.k; closeModal();
+        if (k === 'replay' || k === 'comp' || k === 'play') go(k);
+        else if (k === 'themes' || k === 'backgrounds') go('options', k);
+        else if (k === 'arrange') { if (App.view !== 'timer') go('timer'); openArrange(); }
+        else if (k === 'mode') { set().mode = set().mode === 'simple' ? 'full' : 'simple'; Store.saveSoon(); applySettings(); go('timer'); }
+        else go('options', 'essentials');
+      };
+    }, { sheet: true });
+  }
+  function initPolish() {
+    // splash: once per browser session
+    const sp = $('#splash'); if (sp) { let seen = false; try { seen = sessionStorage.getItem('solvo.splash') === '1'; sessionStorage.setItem('solvo.splash', '1'); } catch (e) { } if (seen || C.reducedMotion()) sp.remove(); else setTimeout(() => sp.remove(), 1500); }
+    // background parallax (mouse only)
+    const bg = $('#bg'); let raf = 0, px = 0, py = 0;
+    if (matchMedia('(pointer: fine)').matches) window.addEventListener('pointermove', e => {
+      if (e.pointerType !== 'mouse') return; px = e.clientX / innerWidth - 0.5; py = e.clientY / innerHeight - 0.5;
+      if (!raf) raf = requestAnimationFrame(() => { raf = 0; const on = set().parallax !== false && !C.reducedMotion() && !document.body.classList.contains('solving'); bg.style.transform = on ? `translate3d(${(-px * 16).toFixed(1)}px, ${(-py * 12).toFixed(1)}px, 0) scale(1.03)` : ''; });
+    });
+    // bottom navigation (phones)
+    const bn = $('#botnav'); if (bn) bn.onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.hasAttribute('data-more')) openMore(); else go(b.dataset.view); };
+    // scramble: copy button, step-by-step preview on hover or tap
+    const sc = $('#scramble');
+    sc.addEventListener('pointerover', e => { if (e.pointerType !== 'mouse') return; const m = e.target.closest('.mv[data-i]'); if (m) previewScramble(+m.dataset.i); });
+    sc.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse' && App.ui.scrPrev != null) previewScramble(null); });
+    sc.addEventListener('click', e => { const m = e.target.closest('.mv[data-i]'); if (!m || e.pointerType === 'mouse') return; const i = +m.dataset.i; previewScramble(App.ui.scrPrev === i ? null : i); });
+    $('#scrCopy').onclick = () => copy(curScramble());
+    // feedback
+    on('start', () => { sfx('start'); haptic(12); });
+    on('stop', () => { sfx('stop'); haptic(25); });
+    on('ready', () => haptic(8));
+    on('pb', () => { sfx('pb'); haptic([20, 40, 30]); Ring.set('pb'); const t = $('#time'); if (t) { t.classList.remove('pbpop'); void t.offsetWidth; t.classList.add('pbpop'); } });
+    window.addEventListener('resize', () => { if (Ring.el && Ring.el.classList.contains('on')) Ring.fit(); });
+  }
+
   // ------------------------------------------------------------------ init
   function init() {
     S = loadLocal() || fresh();
@@ -678,7 +859,7 @@
     newScramble();
     $('#tabs').onclick = e => { const b = e.target.closest('button'); if (b) go(b.dataset.view); };
     $('#btnPrefs').onclick = () => go('options', 'essentials');
-    $('#btnStudio').onclick = () => go('options', 'backgrounds');
+    $('#btnStudio').onclick = () => go('options', 'themes');
     $('#btnArrange').onclick = () => { if (App.view !== 'timer') go('timer'); openArrange(); };
     $('#modeSeg').onclick = e => { const b = e.target.closest('button'); if (!b) return; set().mode = b.dataset.mode; Store.saveSoon(); applySettings(); if (App.view !== 'timer') go('timer'); else renderSolve(); };
     $('#selEvent').onchange = e => { const ev = e.target.value; const s = S.sessions.find(x => x.event === ev); if (s) switchSession(s.id); else newSession(EVENTS[ev] + ' session', ev); };
@@ -690,7 +871,7 @@
       set().input = v; afterInputChange();
     };
     $('#scrPrev').onclick = prevScramble; $('#scrNext').onclick = newScramble;
-    $('#scramble').onclick = () => copy(curScramble());
+    initPolish();
     const typeGo = () => { const r = St.parseTime($('#typeField').value); if (!r) { toast('Type a time like 12.34, 1:05.20 or DNF'); return; } addSolve(r.t, r.p); $('#typeField').value = ''; newScramble(); renderSolve(); $('#typeField').focus(); };
     $('#typeGo').onclick = typeGo; $('#typeField').onkeydown = e => { if (e.key === 'Enter') typeGo(); };
     window.addEventListener('hashchange', () => { const v = location.hash.slice(1); if (v && v !== App.view) go(v); });
@@ -710,6 +891,7 @@
     Timer, fmtBig, addSolve, deleteSolve, openSolve, renderSolve, newScramble, curScramble,
     fillSelectors, switchSession, newSession, sessionPrompt, go, dragRotate, beep, unpackMoves, packMoves, normalize, makeDemo,
     on, emit, VC, replaceScrambleIfIdle, afterInputChange, fillInputs, keyHooks: {},
+    tip, sfx, haptic, scrHTML, TIMER_FONTS, SHORTCUTS, openShortcuts, Ring,
     engine: () => engine,
     afterLoad() { applySettings(); fillSelectors(); Scr.hist = []; Scr.idx = -1; newScramble(); go(App.view, App.sub); },
     init

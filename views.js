@@ -47,7 +47,7 @@
     const now = Date.now();
     // faster
     const roll = St.rolling(list, bigN); const lbls = []; const n = list.length; if (n) for (const f of [0, 0.33, 0.66, 1]) { const i = Math.min(n - 1, Math.round(f * (n - 1))); lbls.push([i, fmtDate(list[i].d)]); }
-    A.lineChart($('#anFaster'), { h: 190, yfmt: A.secFmt, xLabels: lbls, series: [{ d: roll, c: '#5eead4', w: 2, area: true, end: true }], empty: `Needs at least ${bigN} solves` });
+    A.lineChart($('#anFaster'), { h: 190, yfmt: A.secFmt, xLabels: lbls, series: [{ d: roll, c: '#5eead4', w: 2, area: true, end: true }], empty: `Needs at least ${bigN} solves`, tip: i => roll[i] == null ? `<div class="muted">Solve #${i + 1}</div>` : `<div class="muted">${fmtDate(list[i].d)} · solve #${i + 1}</div><div><i style="background:#5eead4"></i>ao${bigN} <b>${St.fmt(roll[i])}</b></div>` });
     // highlights
     const hl = [], m = St.mean(list);
     if (m) hl.push(['∅', `Your mean is <b>${St.fmt(m)}</b>${prevList.length ? (() => { const pm = St.mean(prevList); return pm ? `, <b>${St.fmt(Math.abs(pm - m))}</b> ${m < pm ? 'faster' : 'slower'} than the period before` : ''; })() : ''}.`]);
@@ -60,19 +60,19 @@
     $('#anHl').innerHTML = hl.length ? hl.map(([i, t]) => `<li><span>${i}</span><span>${t}</span></li>`).join('') : '<li class="empty">Solve a few times to see highlights.</li>';
     // histogram
     const hg = St.histogram(list, 16); const med = St.median(list);
-    A.barChart($('#anHist'), hg.bins, { h: 140, top: v => v || '', labels: hg.bins.map((_, i) => i % 3 === 0 ? ((hg.lo + i * hg.w) / 1000).toFixed(hg.w < 1000 ? 1 : 0) : ''), color: (v, i) => med && hg.lo + i * hg.w <= med && med < hg.lo + (i + 1) * hg.w ? '#fbbf24' : '#5eead4' });
+    A.barChart($('#anHist'), hg.bins, { h: 140, top: v => v || '', labels: hg.bins.map((_, i) => i % 3 === 0 ? ((hg.lo + i * hg.w) / 1000).toFixed(hg.w < 1000 ? 1 : 0) : ''), color: (v, i) => med && hg.lo + i * hg.w <= med && med < hg.lo + (i + 1) * hg.w ? '#fbbf24' : '#5eead4', tip: (v, i) => `<div class="muted">${((hg.lo + i * hg.w) / 1000).toFixed(2)}–${((hg.lo + (i + 1) * hg.w) / 1000).toFixed(2)} s</div><b>${v} solve${v === 1 ? '' : 's'}</b>` });
     $('#anHistL').innerHTML = `<span>${(hg.w / 1000).toFixed(2)} s per bar</span><span><i style="background:#fbbf24"></i>median ${St.fmt(med)}</span><span>mean ${St.fmt(m)}</span>`;
     // week
     const wk = [], wl = []; for (let d = 6; d >= 0; d--) { const s0 = startOfDay(now - d * DAY); wk.push(list.filter(s => s.d >= s0 && s.d < s0 + DAY).length); wl.push(new Date(s0).toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 2)); }
     const tw = list.filter(s => now - s.d <= 7 * DAY), lw = list.filter(s => now - s.d > 7 * DAY && now - s.d <= 14 * DAY); const mtw = St.mean(tw), mlw = St.mean(lw);
     $('#anWeekTop').innerHTML = `<div style="display:flex;gap:24px;margin-bottom:6px"><div><div class="eyebrow">Mean this week</div><b class="mono" style="font-size:20px">${St.fmt(mtw)}</b>${mtw && mlw ? `<div style="font-size:12px;color:${mtw < mlw ? 'var(--good)' : 'var(--bad)'}">${mtw < mlw ? '▼' : '▲'} ${St.fmt(Math.abs(mtw - mlw))} vs last week (${St.fmt(mlw)})</div>` : ''}</div><div><div class="eyebrow">Solves</div><b class="mono" style="font-size:20px">${tw.length}</b></div></div>`;
-    A.barChart($('#anWeek'), wk, { h: 100, labels: wl, top: v => v || '', color: () => '#5eead4' });
+    A.barChart($('#anWeek'), wk, { h: 100, labels: wl, top: v => v || '', color: () => '#5eead4', tip: (v, i) => `<div class="muted">${new Date(startOfDay(now - (6 - i) * DAY)).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' })}</div><b>${v} solve${v === 1 ? '' : 's'}</b>` });
     // records
     const rec = [['Single', St.best(list)], ['ao5', St.bestRolling(list, 5)], ['ao12', St.bestRolling(list, 12)], ['ao50', St.bestRolling(list, 50)], ['ao100', St.bestRolling(list, 100)]];
     $('#anRec').innerHTML = rec.map(([k, r]) => `<tr><td>${k}</td><td class="b">${St.fmt(r.v)}</td><td class="muted">${r.at >= 0 ? fmtDate(list[r.at].d) : ''}</td></tr>`).join('') + `<tr><td>Mean</td><td class="b">${St.fmt(m)}</td><td class="muted">all solves</td></tr>`;
     // average trend
     const tail = list.slice(-200), off = list.length - tail.length; const r = k => St.rolling(list, k).slice(off);
-    A.lineChart($('#anAvg'), { h: 170, yfmt: A.secFmt, series: [{ d: r(5), c: '#5eead4', w: 1.4 }, { d: r(12), c: '#c4b5fd', w: 1.6 }, { d: r(50), c: '#fbbf24', w: 1.8 }, { d: r(100), c: '#f472b6', w: 2 }] });
+    A.lineChart($('#anAvg'), { h: 170, yfmt: A.secFmt, series: [{ d: r(5), c: '#5eead4', w: 1.4, label: 'ao5' }, { d: r(12), c: '#c4b5fd', w: 1.6, label: 'ao12' }, { d: r(50), c: '#fbbf24', w: 1.8, label: 'ao50' }, { d: r(100), c: '#f472b6', w: 2, label: 'ao100' }], tip: i => { const S5 = r(5), S12 = r(12), S50 = r(50), S100 = r(100); return `<div class="muted">Solve #${off + i + 1}</div>` + [['ao5', S5, '#5eead4'], ['ao12', S12, '#c4b5fd'], ['ao50', S50, '#fbbf24'], ['ao100', S100, '#f472b6']].filter(x => x[1][i] != null).map(([l, d, c]) => `<div><i style="background:${c}"></i>${l} <b>${St.fmt(d[i])}</b></div>`).join(''); } });
     // windows
     const W = St.windows(list, [12, 50, 100, 500, 'all']);
     $('#anWin').innerHTML = `<thead><tr><th>Window</th><th>Mean</th><th>Best</th><th>σ</th><th>vs before</th></tr></thead><tbody>` + W.map(w => w.empty ? `<tr><td>Last ${w.n}</td><td colspan="4" class="muted">not enough solves</td></tr>` : `<tr><td>${w.n === 'all' ? 'All ' + list.length : 'Last ' + w.n}</td><td class="b">${St.fmt(w.mean)}</td><td>${St.fmt(w.best)}</td><td>${w.sd ? (w.sd / 1000).toFixed(2) : '–'}</td><td style="color:${w.delta == null ? 'inherit' : w.delta < 0 ? 'var(--good)' : 'var(--bad)'}">${w.delta == null ? '–' : (w.delta < 0 ? '▼ ' : '▲ ') + (Math.abs(w.delta) / 1000).toFixed(2)}</td></tr>`).join('') + '</tbody>';
@@ -83,12 +83,12 @@
     $('#anHeat').innerHTML = cells;
     // hours
     const hv = byH.map(x => x && x.n >= 3 ? x.m : 0); const best = Math.min(...hv.filter(v => v > 0));
-    A.barChart($('#anHour'), hv, { h: 120, labels: hv.map((_, i) => i % 6 === 0 ? i + 'h' : ''), color: v => v === best ? '#fde68a' : '#5eead4' });
+    A.barChart($('#anHour'), hv, { h: 120, labels: hv.map((_, i) => i % 6 === 0 ? i + 'h' : ''), color: v => v === best ? '#fde68a' : '#5eead4', tip: (v, i) => `<div class="muted">${String(i).padStart(2, '0')}:00–${String(i).padStart(2, '0')}:59</div><b>${v ? 'mean ' + St.fmt(v) : 'fewer than 3 solves'}</b>` });
     // sub-x per month
     const months = {}; list.forEach(s => { const d = new Date(s.d); const k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); (months[k] = months[k] || []).push(s); });
     const keys = Object.keys(months).sort().slice(-12); const base = m ? Math.floor(m / 1000) : 15; const ths = [base - 2, base, base + 2].filter(x => x > 0);
     const cols = ['#5eead4', '#c4b5fd', '#fbbf24'];
-    A.lineChart($('#anSubM'), { h: 120, zero: true, yfmt: v => Math.round(v) + '%', xLabels: keys.length ? [[0, keys[0]], [keys.length - 1, keys[keys.length - 1]]] : null, series: ths.map((t, i) => ({ c: cols[i], w: 2, dots: true, d: keys.map(k => months[k].filter(s => St.val(s) < t * 1000).length / months[k].length * 100) })), empty: 'Needs solves in two different months' });
+    A.lineChart($('#anSubM'), { h: 120, zero: true, yfmt: v => Math.round(v) + '%', xLabels: keys.length ? [[0, keys[0]], [keys.length - 1, keys[keys.length - 1]]] : null, series: ths.map((t, i) => ({ c: cols[i], w: 2, dots: true, label: 'sub-' + t, d: keys.map(k => months[k].filter(s => St.val(s) < t * 1000).length / months[k].length * 100) })), empty: 'Needs solves in two different months', fmt: v => Math.round(v) + '%', tip: i => `<div class="muted">${keys[i]} · ${months[keys[i]].length} solves</div>` + ths.map((t, k) => `<div><i style="background:${cols[k]}"></i>sub-${t} <b>${Math.round(months[keys[i]].filter(s => St.val(s) < t * 1000).length / months[keys[i]].length * 100)}%</b></div>`).join('') });
     $('#anSubML').innerHTML = ths.map((t, i) => `<span><i style="background:${cols[i]}"></i>sub-${t}</span>`).join('');
     // details
     const dnf = list.filter(s => s.p === -1).length, p2 = list.filter(s => s.p === 2000).length, sd = St.stdev(list);
@@ -187,7 +187,7 @@
       <div class="row-actions" style="margin-top:12px"><button class="btn sm" id="pCmp">${A.icon('compare', 13)} Compare</button><button class="btn sm" id="pCopy">Copy solution</button><button class="btn sm" id="pVid">${A.icon('download', 13)} Video (WebM)</button><button class="btn sm primary" id="pRace">${A.icon('ghost', 13)} Race this solve</button></div>`;
     requestAnimationFrame(() => {
       const tp = $('#pTps'); if (!tp) return;
-      A.lineChart(tp, { h: 90, pl: 26, zero: true, yfmt: v => v.toFixed(0), series: [{ d: an.tps, c: '#a78bfa', w: 1.6, area: true }] });
+      A.lineChart(tp, { h: 90, pl: 26, zero: true, yfmt: v => v.toFixed(0), series: [{ d: an.tps, c: '#a78bfa', w: 1.6, area: true }], tip: i => `<div class="muted">${(i * 0.25).toFixed(2)} s</div><b>${an.tps[i]} turns/s</b>`, onPick: i => { P.t = Math.min(an.dur, i * 250); pause(); paint(); } });
       const svg = tp.querySelector('svg'); if (svg && an.dur) { const Wd = +svg.getAttribute('width'); an.pauses.forEach(p => { const x = 26 + (p.at / an.dur) * (Wd - 36); svg.insertAdjacentHTML('beforeend', `<line x1="${x}" x2="${x}" y1="10" y2="82" stroke="#fbbf24" stroke-dasharray="2 3" opacity="0.7"/>`); }); }
     });
     // moves list
@@ -217,7 +217,10 @@
   }
   function paint() {
     if (!P.rep || !$('#pCanvas')) return;
-    const k = kAt(P.t); setK(k); C.draw3D($('#pCanvas'), P.cube, P.view);
+    const k = kAt(P.t), mv = P.rep.mv; let an = null;
+    if (P.playing && k > 0 && !C.reducedMotion()) { const ms = mv[k - 1][1], nx = k < mv.length ? mv[k][1] : Infinity, d = Math.min(110, Math.max(28, (nx - ms) * 0.9)), f = (P.t - ms) / d; if (f < 1) an = Math.max(0, f); }
+    if (an != null) { setK(k - 1); C.draw3D($('#pCanvas'), P.cube, P.view, { p: P.cube.parse(mv[k - 1][0]), f: C.easeOut(an) }); }
+    else { setK(k); C.draw3D($('#pCanvas'), P.cube, P.view); }
     $('#pT').textContent = St.fmt(P.t); $('#pScrub').value = P.t;
     const ph = phaseAt(k); $('#pPh').innerHTML = ph ? `<span class="phase-dot" style="background:${PH_COL[ph.name]}"></span>${ph.name} · ${k === 0 ? 'Start' : P.rep.mv[k - 1][0]}` : (k === 0 ? 'Start' : '');
     $$('#pMoves span').forEach((s, i) => { s.classList.toggle('done', i < k - 1); s.classList.toggle('cur', i === k - 1); });
@@ -248,9 +251,11 @@
     await new Promise(resolve => {
       const frame = () => {
         const t = performance.now() - t0 - 600;
-        while (k < mv.length && mv[k][1] <= t) { cube.move(mv[k][0]); k++; }
+        let K = k; while (K < mv.length && mv[K][1] <= t) K++;
+        let an = null; if (K > 0) { const ms = mv[K - 1][1], nx = K < mv.length ? mv[K][1] : Infinity, d = Math.min(110, Math.max(28, (nx - ms) * 0.9)), f = (t - ms) / d; if (f < 1) an = { i: K - 1, f: Math.max(0, f) }; }
+        const tgt = an ? K - 1 : K; while (k < tgt) { cube.move(mv[k][0]); k++; }
         const g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, BG.mix(pal.shadow, pal.mid, 0.4)); g.addColorStop(1, pal.shadow); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-        C.draw3D(layer, cube, view); ctx.drawImage(layer, 0, 40);
+        C.draw3D(layer, cube, view, an ? { p: cube.parse(mv[an.i][0]), f: C.easeOut(an.f) } : undefined); ctx.drawImage(layer, 0, 40);
         const ph = phaseAt(k);
         ctx.fillStyle = '#fff'; ctx.font = '800 64px Outfit, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(St.fmt(clamp(t, 0, dur)), W / 2, H - 50);
         ctx.font = '600 22px Inter, sans-serif'; ctx.fillStyle = ph ? PH_COL[ph.name] : '#c9c2e6'; ctx.fillText(ph && t > 0 ? ph.name : 'Inspection', W / 2, 44);
@@ -355,7 +360,7 @@
       <section class="glass comp-stage">
         <div class="eyebrow">Competition practice</div><div style="font-family:var(--f-display);font-weight:700;font-size:20px">Round ${c.round} · Group ${c.group}</div>
         ${done ? `<div class="attempt">Round complete</div><div class="time" style="font-size:clamp(48px,7vw,90px)">${St.fmt(compAvg(c.att))}</div><div class="muted">Average of 5 · best single ${St.fmt(bestV)}</div><div class="row-actions"><button class="btn primary" id="cNext">Next round</button><button class="btn" id="cNew">New competition</button><button class="btn" id="cShare">Share card</button></div>`
-        : `<div class="attempt">Attempt ${c.i + 1} of 5</div><div class="scramble" style="max-width:640px">${esc(cur.s)}</div>
+        : `<div class="attempt">Attempt ${c.i + 1} of 5</div><div class="scramble" style="max-width:640px">${A.scrHTML(cur.s)}</div>
           <div class="time mono" id="compTime">${c.timing === 'typing' ? '0.00' : '0.00'}</div>
           ${c.timing === 'typing' ? `<div class="type-in"><input id="cType" inputmode="decimal" autocomplete="off" placeholder="e.g. 9.42 · 9.42+ · DNF"><button class="btn primary" id="cTypeGo">Enter</button></div><div class="hint">Solve with your own timer, then type the result and press Enter.</div>` : `<div class="hint" id="compHint">Press <span class="kbd">Space</span> to start inspection</div>`}`}
       </section>
@@ -394,7 +399,7 @@
   // =============================================================== SETTINGS
   const SECTIONS = [
     ['Essentials', [['essentials', 'Essentials'], ['solving', 'While solving']]],
-    ['Appearance', [['colours', 'Colours'], ['backgrounds', 'Backgrounds'], ['glass', 'Cards & glass']]],
+    ['Appearance', [['themes', 'Themes'], ['colours', 'Colours & timer font'], ['backgrounds', 'Backgrounds'], ['glass', 'Cards & glass']]],
     ['Training', [['coach', 'Coach modes'], ['goals', 'Session goals']]],
     ['Workspace', [['sessions', 'Sessions'], ['scramble', 'Scramble'], ['keys', 'Virtual cube keys'], ['smart', 'Smart cube & timer'], ['shortcuts', 'Shortcuts']]],
     ['Data', [['data', 'Import & export']]]
@@ -407,6 +412,19 @@
     $('#setQ').oninput = e => { const q = e.target.value.toLowerCase(); $$('.set-nav button').forEach(b => b.hidden = q && !b.textContent.toLowerCase().includes(q)); };
     (SET[sub] || SET.essentials)($('#setBody'));
   };
+  const THEMES = [
+    { id: 'amethyst', name: 'Amethyst', bg: 'bubbles', pal: 0, accent: '#a78bfa', blur: 14, glassA: 0.58, radius: 14, font: 'bold', speed: 1 },
+    { id: 'sakura', name: 'Sakura Night', bg: 'sakura', pal: 7, accent: '#f9a8c9', blur: 16, glassA: 0.5, radius: 18, font: 'thin', speed: 0.8 },
+    { id: 'neon', name: 'Neon Arcade', bg: 'scramblerain', pal: 9, accent: '#22d3ee', blur: 8, glassA: 0.7, radius: 6, font: 'future', speed: 1.2 },
+    { id: 'ocean', name: 'Ocean Glass', bg: 'rain', pal: 2, accent: '#5eead4', blur: 18, glassA: 0.45, radius: 16, font: 'bold', speed: 1 },
+    { id: 'ember', name: 'Ember', bg: 'plasma', pal: 3, accent: '#fb923c', blur: 12, glassA: 0.62, radius: 12, font: 'bold', speed: 0.7 },
+    { id: 'mono', name: 'Minimal Mono', bg: 'studio', pal: 6, accent: '#e4e4e7', blur: 0, glassA: 0.82, radius: 6, font: 'mono', speed: 0.6 },
+    { id: 'aurora', name: 'Aurora', bg: 'aurora', pal: 4, accent: '#7dd3fc', blur: 14, glassA: 0.5, radius: 16, font: 'thin', speed: 1 },
+    { id: 'topo', name: 'Topo Rose', bg: 'topo', pal: 1, accent: '#f9a8d4', blur: 14, glassA: 0.55, radius: 14, font: 'bold', speed: 0.8 },
+    { id: 'horizon', name: 'Event Horizon', bg: 'horizon', pal: 8, accent: '#fde68a', blur: 12, glassA: 0.6, radius: 10, font: 'future', speed: 1 },
+    { id: 'stackmat', name: 'Stackmat', bg: 'hex', pal: 5, accent: '#a3e635', blur: 10, glassA: 0.66, radius: 8, font: 'digital', speed: 0.9 },
+  ];
+  A.THEMES = THEMES;
   const s = () => A.set();
   const save = (rerender) => { A.Store.saveSoon(); A.applySettings(); if (rerender) A.render.options(A.ui.optSub); };
   const tog = (id, label, desc, on) => `<div class="row"><div><label for="${id}">${label}</label><div class="d">${desc}</div></div><input type="checkbox" class="switch" id="${id}" ${on ? 'checked' : ''}></div>`;
@@ -417,8 +435,11 @@
         ${tog('oInsp', 'WCA inspection', '15 seconds to look at the cube. +2 after 15 s, DNF after 17 s.', s().inspection)}
         <div class="row"><div><label for="oHold">Hold time</label><div class="d">How long to hold Space before the timer turns green: <b class="mono" id="oHoldV">${(s().holdMs / 1000).toFixed(2)} s</b></div></div><input type="range" id="oHold" min="0" max="1000" step="50" value="${s().holdMs}"></div>
         <div class="row"><div><label for="oCall">Inspection callouts</label><div class="d">At 8 and 12 seconds, like a WCA judge. Voice uses your device's speech.</div></div><select class="field" id="oCall"><option value="beep">Beeps</option><option value="voice-en">Voice · English</option><option value="voice-vi">Voice · Tiếng Việt</option><option value="off">Off</option></select></div>
+        <div class="row"><div><label for="oSfx">Sounds</label><div class="d">A chime for new PBs and badges. "All" also clicks when the timer starts and stops.</div></div><select class="field" id="oSfx"><option value="pb">PBs and badges</option><option value="all">All</option><option value="off">Off</option></select></div>
+        ${tog('oHap', 'Vibration on phones', 'A short buzz when the timer starts, turns green and stops. Android phones only.', s().haptics)}
         <div class="row"><div><label for="oInput">Timing input</label><div class="d">Timer uses Space or a tap. Typing is for your own stackmat. Virtual cube records replays.</div></div><select class="field" id="oInput"><option value="timer">Timer</option><option value="typing">Typing</option><option value="virtual">Virtual cube</option></select></div>`;
-      bindTog(el, 'oInsp', 'inspection');
+      bindTog(el, 'oInsp', 'inspection'); bindTog(el, 'oHap', 'haptics');
+      $('#oSfx', el).value = s().uiSounds; $('#oSfx', el).onchange = e => { s().uiSounds = e.target.value; save(); A.sfx('pb'); };
       $('#oCall', el).value = s().callout; $('#oCall', el).onchange = e => { s().callout = e.target.value; save(); A.callout(8); };
       $('#oHold', el).oninput = e => { s().holdMs = +e.target.value; $('#oHoldV', el).textContent = (s().holdMs / 1000).toFixed(2) + ' s'; save(); };
       $('#oInput', el).value = s().input; $('#oInput', el).onchange = e => { s().input = e.target.value; save(); };
@@ -428,17 +449,27 @@
         ${tog('oFocus', 'Focus mode', 'Hide everything except the time while you solve.', s().focus)}
         <div class="row"><div><label for="oUpd">Time display while solving</label><div class="d">Some cubers solve better without watching the clock.</div></div><select class="field" id="oUpd"><option value="full">Full (0.01 s)</option><option value="sec">Seconds only</option><option value="hide">Hidden</option></select></div>
         ${tog('oFreeze', 'Freeze background during solves', 'Off: the background keeps moving while you solve.', s().freeze)}
+        ${tog('oPar', 'Background parallax', 'The background drifts slightly with your mouse. Turns off while you solve.', s().parallax !== false)}
         ${tog('oMetro', 'Metronome during solves', 'Clicks at a steady pace while the timer runs, to train smooth turning.', s().metroOn)}
         <div class="row"><div><label for="oTps">Metronome pace</label><div class="d"><b class="mono" id="oTpsV">${s().metroTps.toFixed(1)} TPS</b> · ${'more options in Train → Metronome'}</div></div><input type="range" id="oTps" min="1" max="12" step="0.5" value="${s().metroTps}"></div>`;
-      bindTog(el, 'oFocus', 'focus'); bindTog(el, 'oFreeze', 'freeze'); bindTog(el, 'oMetro', 'metroOn');
+      bindTog(el, 'oFocus', 'focus'); bindTog(el, 'oFreeze', 'freeze'); bindTog(el, 'oMetro', 'metroOn'); bindTog(el, 'oPar', 'parallax');
       $('#oTps', el).oninput = e => { s().metroTps = +e.target.value; $('#oTpsV', el).textContent = s().metroTps.toFixed(1) + ' TPS'; save(); };
       $('#oUpd', el).value = s().timerUpdate; $('#oUpd', el).onchange = e => { s().timerUpdate = e.target.value; save(); };
     },
+    themes(el) {
+      el.innerHTML = `<h2>Themes</h2><p>One tap sets the background, colours, glass and timer font together. Fine-tune any part afterwards.</p>
+        <div class="theme-grid">${THEMES.map(t => { const f = A.TIMER_FONTS[t.font]; return `<button class="theme ${s().theme === t.id ? 'on' : ''}" data-t="${t.id}" aria-pressed="${s().theme === t.id}"><canvas width="240" height="150"></canvas><span class="th-time" style='font-family:${f.f};font-weight:${f.w};letter-spacing:${f.ls}'>12.34</span><span class="th-name"><i style="background:${t.accent}"></i>${esc(t.name)}${s().theme === t.id ? ' <b>· Active</b>' : ''}</span></button>`; }).join('')}</div>
+        <div class="row-actions" style="margin-top:14px"><button class="btn" id="thBg">Fine-tune background</button><button class="btn" id="thCol">Accent &amp; timer font</button><button class="btn" id="thGl">Cards &amp; glass</button></div>`;
+      $$('.theme', el).forEach((b, i) => { const t = THEMES[i]; setTimeout(() => { const cv = b.querySelector('canvas'); if (cv) cv.getContext('2d').drawImage(BG.thumb(t.bg, BG.PALETTES[t.pal], 240, 150), 0, 0); }, 20 + i * 25); b.onclick = () => { Object.assign(s(), { theme: t.id, bg: t.bg, palette: t.pal, accent: t.accent, blur: t.blur, glassA: t.glassA, radius: t.radius, timerFont: t.font, bgSpeed: t.speed }); const m = A.S.meta; m.bgs = m.bgs || []; if (!m.bgs.includes(t.bg)) { m.bgs.push(t.bg); A.checkBadges && A.checkBadges(); } save(true); A.toast(`${A.icon('palette')} Theme: <b>${esc(t.name)}</b>`); }; });
+      $('#thBg', el).onclick = () => A.render.options('backgrounds'); $('#thCol', el).onclick = () => A.render.options('colours'); $('#thGl', el).onclick = () => A.render.options('glass');
+    },
     colours(el) {
       const acc = ['#a78bfa', '#f472b6', '#5eead4', '#60a5fa', '#fbbf24', '#4ade80', '#fb923c', '#e4e4e7'];
-      el.innerHTML = `<h2>Colours</h2><p>The accent colour for buttons, highlights and charts.</p>
-        <div class="row"><label>Accent</label><div class="swatches">${acc.map(c => `<button class="sw ${c === s().accent ? 'on' : ''}" data-c="${c}" style="background:${c}" aria-label="Accent ${c}"></button>`).join('')}<input type="color" id="oAcc" value="${s().accent}" aria-label="Custom accent" style="width:34px;height:30px;border:0;background:none;padding:0"></div></div>`;
+      el.innerHTML = `<h2>Colours &amp; timer font</h2><p>The accent colour for buttons, highlights and charts, and the typeface of the big time.</p>
+        <div class="row"><label>Accent</label><div class="swatches">${acc.map(c => `<button class="sw ${c === s().accent ? 'on' : ''}" data-c="${c}" style="background:${c}" aria-label="Accent ${c}"></button>`).join('')}<input type="color" id="oAcc" value="${s().accent}" aria-label="Custom accent" style="width:34px;height:30px;border:0;background:none;padding:0"></div></div>
+        <div class="row" style="display:block"><label>Timer font</label><div class="font-grid">${Object.entries(A.TIMER_FONTS).map(([k, f]) => `<button class="font-opt ${s().timerFont === k ? 'on' : ''}" data-f="${k}" aria-pressed="${s().timerFont === k}"><span style='font-family:${f.f};font-weight:${f.w};letter-spacing:${f.ls}'>12.34</span><small>${f.name}</small></button>`).join('')}</div></div>`;
       $$('.sw', el).forEach(b => b.onclick = () => { s().accent = b.dataset.c; save(true); });
+      $$('.font-opt', el).forEach(b => b.onclick = () => { s().timerFont = b.dataset.f; save(true); });
       $('#oAcc', el).onchange = e => { s().accent = e.target.value; save(true); };
     },
     backgrounds(el) {
@@ -510,9 +541,10 @@
       el.innerHTML = `<h2>Scramble</h2><p>3×3 and 2×2 use random-state scrambles like WCA competitions: a random cube position, solved by Solvo's own two-phase solver, then reversed. 4×4 and 5×5 use random-move scrambles (40 and 60 moves).</p>
         <div class="row"><div><label>Random-state generator</label><div class="d">${rs === 'ready' ? 'Ready. New 3×3 scrambles are random-state.' : rs === 'warming' ? 'Warming up in the background (a few seconds). Until then you get random-move scrambles.' : 'Not available in this browser, so 3×3 uses random-move scrambles.'}</div></div><b style="color:${rs === 'ready' ? 'var(--good)' : 'var(--warn)'}">${rs === 'ready' ? 'Ready' : rs === 'warming' ? 'Warming up' : 'Off'}</b></div>
         ${tog('oNet', 'Scramble preview', 'Show the scrambled cube as a flat net under the scramble.', s().showNet)}
+        ${tog('oCol', 'Colour-coded moves', 'Each face gets its own colour. Hover or tap a move to see the cube right after it.', s().colorScr !== false)}
         <div class="row"><div><label>Current event</label><div class="d">Change the event from the selector in the top bar.</div></div><b>${A.EVENTS[A.event()]}</b></div>
         <div class="row" style="display:block"><label>Preview</label><div class="mono" style="margin:8px 0">${esc(A.curScramble())}</div><canvas data-net style="width:100%;max-width:360px;height:200px"></canvas></div>`;
-      bindTog(el, 'oNet', 'showNet');
+      bindTog(el, 'oNet', 'showNet'); $('#oCol', el).onchange = e => { s().colorScr = e.target.checked; save(); A.newScramble && A.renderSolve && document.querySelector('#scramble') && (document.querySelector('#scramble').innerHTML = A.scrHTML(A.curScramble(), true)); };
       const N = C.EVENT_N[A.event()]; C.drawNet($('[data-net]', el), new C.Cube(N).apply(A.curScramble()));
     },
     keys(el) {
@@ -539,8 +571,7 @@
       b('smSolved') && (b('smSolved').onclick = () => Sm.markSolved());
     },
     shortcuts(el) {
-      const rows = [['F (Train)', 'Mark the last OLL/PLL case as failed'], ['Space / N (Cross trainer)', 'Plan, reveal, next scramble'], ['Space', 'Start inspection · hold and release to start · stop'], ['Any key', 'Stop the timer'], ['Esc', 'Cancel inspection'], ['Alt + Z', 'Delete the last solve'], ['Alt + 2', 'Toggle +2 on the last solve'], ['Alt + D', 'Toggle DNF on the last solve'], ['Alt + N', 'New scramble'], ['Tap the time area', 'Start and stop on a phone or tablet']];
-      el.innerHTML = `<h2>Shortcuts</h2><p>Work on the Solve and Comp screens.</p>` + rows.map(([k, v]) => `<div class="row"><span class="kbd">${k}</span><span class="muted">${v}</span></div>`).join('');
+      el.innerHTML = `<h2>Shortcuts</h2><p>Press <span class="kbd">?</span> anywhere to see this list.</p>` + A.SHORTCUTS.map(([k, v]) => `<div class="row"><span class="kbd">${esc(k)}</span><span class="muted">${esc(v)}</span></div>`).join('');
     },
     data(el) {
       const demo = A.S.sessions.find(x => x.demo);

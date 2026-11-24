@@ -169,7 +169,7 @@
     const run = () => {
       const st = A.badgeStatus(), fresh = st.filter(b => b.done && !A.S.badges[b.id]);
       if (!fresh.length) { firstCheck = false; return; }
-      fresh.forEach(b => A.S.badges[b.id] = Date.now()); A.Store.saveSoon();
+      fresh.forEach(b => A.S.badges[b.id] = Date.now()); A.Store.saveSoon(); if (!firstCheck) A.sfx('badge');
       if (fresh.length > 2) A.toast(`${A.icon('award')} You unlocked <b>${fresh.length} badges</b> · see them in Coach`, 3800);
       else fresh.forEach((b, i) => setTimeout(() => A.toast(`${A.icon('award')} Badge unlocked · <b>${esc(b.name)}</b>`, 3200), i * 900));
       if (!firstCheck) A.confetti(); firstCheck = false;
@@ -290,16 +290,18 @@
     if (rep) this.draw();
     if (!rep || changedRep) { $('#splits').innerHTML = ''; }
   };
-  Ghost.draw = function () { const c = $('#ghCanvas'); if (c && this.cube && !$('#ghost').hidden) C.draw3D(c, this.cube, this.view); };
+  Ghost.draw = function (anim) { const c = $('#ghCanvas'); if (c && this.cube && !$('#ghost').hidden) C.draw3D(c, this.cube, this.view, anim); };
   Ghost.start = function () {
     if (!this.rep || A.set().input === 'typing') return;
     this.cube = new C.Cube(3).apply(this.rep.scr); this.k = 0; this.finished = false; this.me = { base: null, marks: {} }; $('#splits').innerHTML = '';
     cancelAnimationFrame(this.raf);
     const mv = this.rep.mv, loop = () => {
       if (A.Timer.state !== 'running') return;
-      const el = performance.now() - A.Timer.t0; let moved = false;
-      while (this.k < mv.length && mv[this.k][1] <= el) { this.cube.move(mv[this.k][0]); this.k++; moved = true; }
-      if (moved) this.draw();
+      const el = performance.now() - A.Timer.t0;
+      let K = this.k; while (K < mv.length && mv[K][1] <= el) K++;
+      let an = null; if (K > 0 && !C.reducedMotion()) { const ms = mv[K - 1][1], nx = K < mv.length ? mv[K][1] : Infinity, d = Math.min(110, Math.max(28, (nx - ms) * 0.9)), f = (el - ms) / d; if (f < 1) an = { i: K - 1, f: Math.max(0, f) }; }
+      const tgt = an ? K - 1 : K; while (this.k < tgt) { this.cube.move(mv[this.k][0]); this.k++; }
+      this.draw(an ? { p: this.cube.parse(mv[an.i][0]), f: C.easeOut(an.f) } : undefined);
       const ph = this.an.phases ? this.an.phases.find(p => el <= p.t1) : null;
       $('#ghLabel').innerHTML = this.k >= mv.length ? `Ghost finished · <b class="mono">${St.fmt(this.rep.t)}</b>` : `Ghost · ${ph ? ph.name : 'solving'}`;
       this.raf = requestAnimationFrame(loop);
@@ -389,10 +391,10 @@
   };
   Smart.cleanup = function () { try { this.sub && this.sub.unsubscribe(); } catch (e) { } this.sub = null; this.conn = null; this.kind = null; this.battery = null; this.synced = false; A.refreshOpen && A.refreshOpen(); };
   Smart.disconnect = function (silent) { const c = this.conn; this.cleanup(); if (c) { try { c.disconnect(); } catch (e) { } if (!silent) A.toast('Disconnected'); } };
-  Smart.markSolved = async function () { if (this.kind !== 'cube' || !this.conn) return; try { await this.conn.sendCubeCommand({ type: 'REQUEST_RESET' }); } catch (e) { } A.VC.cube = new C.Cube(3); A.VC.draw(); this.newGuide(); A.toast('Cube marked as solved'); };
+  Smart.markSolved = async function () { if (this.kind !== 'cube' || !this.conn) return; try { await this.conn.sendCubeCommand({ type: 'REQUEST_RESET' }); } catch (e) { } A.VC.setCube(new C.Cube(3)); this.newGuide(); A.toast('Cube marked as solved'); };
   Smart.onEvent = function (ev) {
     if (ev.type === 'MOVE') this.onMove(ev.move);
-    else if (ev.type === 'FACELETS' && !this.synced) { this.synced = true; A.VC.cube = cubeFromFacelets(ev.facelets); A.VC.moves = []; A.VC.draw(); this.newGuide(); }
+    else if (ev.type === 'FACELETS' && !this.synced) { this.synced = true; A.VC.setCube(cubeFromFacelets(ev.facelets)); A.VC.moves = []; this.newGuide(); }
     else if (ev.type === 'BATTERY') { this.battery = ev.batteryLevel; A.view === 'options' && A.refreshOpen(); }
     else if (ev.type === 'DISCONNECT') { this.cleanup(); A.toast('Smart cube disconnected'); }
   };
@@ -405,9 +407,9 @@
   };
   const qt = m => m.endsWith('2') ? 2 : m.endsWith("'") ? 3 : 1;
   Smart.onMove = function (m) {
-    if (A.set().input !== 'smart' || A.view !== 'timer') { if (A.VC.cube) { A.VC.cube.move(m); } return; }
+    if (A.set().input !== 'smart' || A.view !== 'timer') { if (A.VC.cube) { A.VC.cube.move(m); A.VC.show(m); } return; }
     if (A.Timer.state === 'running' || this.phase === 'ready' || this.phase === 'inspect') { this.phase = 'solving'; A.VC.turn(m); return; }
-    A.VC.cube.move(m); A.VC.draw();
+    A.VC.cube.move(m); A.VC.show(m);
     if (this.phase === 'unsolved') { if (A.VC.cube.isSolved()) this.newGuide(); else this.renderGuide(); return; }
     const g = this.guide; if (!g) return;
     if (g.fixes.length) { const top = g.fixes[g.fixes.length - 1]; if (m === C.invertMove(top) || (top[0] === m[0] && (qt(top) + qt(m)) % 4 === 0)) g.fixes.pop(); else g.fixes.push(m); }
